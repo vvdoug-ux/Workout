@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Workout Tracker</title>
+    <!-- We load Chart.js to handle the visual progress graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f4f4f9; 
+            color: #333; 
+        }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin-bottom: 20px; 
+        }
+        h2 { margin-top: 0; color: #1a1a1a; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        input, select, button { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        button { 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            transition: background 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+        canvas { max-width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Input Form -->
+    <div class="card">
+        <h2>Log Exercise</h2>
+        <form id="workout-form">
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label>Exercise Name</label>
+                <input type="text" id="exercise" placeholder="e.g., Bench Press, Squat, Pull-ups" required>
+            </div>
+            <div class="form-group" style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Weight (lbs/kg)</label>
+                    <input type="number" id="weight" step="0.5" required>
+                </div>
+                <div style="flex: 1;">
+                    <label>Reps</label>
+                    <input type="number" id="reps" required>
+                </div>
+            </div>
+            <button type="submit">Save Set</button>
+        </form>
+    </div>
+
+    <!-- Chart Visualization -->
+    <div class="card">
+        <h2>Progress Tracker</h2>
+        <label>Select exercise to view progress:</label>
+        <select id="chart-filter">
+            <option value="">-- No Data Yet --</option>
+        </select>
+        <canvas id="progressChart"></canvas>
+    </div>
+
+    <!-- History Table -->
+    <div class="card">
+        <h2>History</h2>
+        <table id="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Exercise</th>
+                    <th>Weight</th>
+                    <th>Reps</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Load existing data from browser storage, or start empty
+        let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        let chartInstance = null;
+
+        // Default to today's date
+        document.getElementById('date').valueAsDate = new Date();
+
+        const form = document.getElementById('workout-form');
+        const filter = document.getElementById('chart-filter');
+
+        // Handle form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            const exercise = document.getElementById('exercise').value.trim();
+            const weight = parseFloat(document.getElementById('weight').value);
+            const reps = parseInt(document.getElementById('reps').value);
+
+            // Save new workout
+            workouts.push({ date, exercise, weight, reps });
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            
+            updateUI();
+            form.reset();
+            document.getElementById('date').valueAsDate = new Date();
+        });
+
+        filter.addEventListener('change', updateChart);
+
+        function updateUI() {
+            updateTable();
+            updateDropdown();
+            updateChart();
+        }
+
+        function updateTable() {
+            const tbody = document.querySelector('#history-table tbody');
+            tbody.innerHTML = '';
+            
+            // Sort history to show newest items first
+            const sorted = [...workouts].sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            sorted.forEach(w => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${w.date}</td><td>${w.exercise}</td><td>${w.weight}</td><td>${w.reps}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateDropdown() {
+            const exercises = [...new Set(workouts.map(w => w.exercise))];
+            const currentSelection = filter.value;
+            
+            if (exercises.length === 0) return;
+
+            filter.innerHTML = '<option value="">-- Select Exercise --</option>';
+            exercises.forEach(ex => {
+                const option = document.createElement('option');
+                option.value = ex;
+                option.textContent = ex;
+                if (ex === currentSelection) option.selected = true;
+                filter.appendChild(option);
+            });
+
+            if (!filter.value && exercises.length > 0) {
+                filter.value = exercises[0];
+            }
+        }
+
+        function updateChart() {
+            const selectedEx = filter.value;
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            if (!selectedEx) return;
+
+            // Filter data for the chosen exercise and sort chronologically
+            const data = workouts
+                .filter(w => w.exercise === selectedEx)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const dates = data.map(w => w.date);
+            const weights = data.map(w => w.weight);
+
+            // Draw the line chart
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: `${selectedEx} Progression`,
+                        data: weights,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        // Initialize the app on load
+        updateUI();
+    </script>
+</body>
+</html>
