@@ -137,12 +137,32 @@
         const form = document.getElementById('workout-form');
         const filter = document.getElementById('chart-filter');
         const datalist = document.getElementById('exercise-history');
+        const exerciseInput = document.getElementById('exercise');
+
+        // Autofill Weight, Sets, and Reps from the most recent entry of the selected exercise
+        exerciseInput.addEventListener('input', () => {
+            const val = exerciseInput.value.trim();
+            if (!val) return;
+
+            // Find matching entries (case-insensitive)
+            const matching = workouts.filter(w => w.exercise.toLowerCase() === val.toLowerCase());
+            
+            if (matching.length > 0) {
+                // Sort matching entries chronologically to find the newest entry
+                const newest = matching.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                if (newest) {
+                    document.getElementById('weight').value = newest.weight;
+                    document.getElementById('sets').value = newest.sets ? newest.sets : '';
+                    document.getElementById('reps').value = newest.reps;
+                }
+            }
+        });
 
         // Handle form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const date = document.getElementById('date').value;
-            const exercise = document.getElementById('exercise').value.trim();
+            const exercise = exerciseInput.value.trim();
             const weight = parseFloat(document.getElementById('weight').value);
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
