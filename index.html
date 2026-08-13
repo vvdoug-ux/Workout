@@ -15,6 +15,43 @@
             background: #f4f4f9; 
             color: #333; 
         }
+        
+        /* Top Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 6px;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            margin-top: 0;
+        }
+        .tab-btn:hover {
+            background: #cbd5e1;
+        }
+        .tab-btn.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* Section Visibility */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
         .card { 
             background: white; 
             padding: 20px; 
@@ -62,8 +99,15 @@
 </head>
 <body>
 
-    <!-- Input Form -->
-    <div class="card">
+    <!-- Top Navigation Buttons -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
+        <button class="tab-btn" onclick="switchTab('tracker')">Progress Tracker</button>
+        <button class="tab-btn" onclick="switchTab('history')">History</button>
+    </div>
+
+    <!-- Input Form Tab -->
+    <div id="section-log" class="card tab-content active">
         <h2>Log Exercise</h2>
         <form id="workout-form">
             <div class="form-group">
@@ -93,8 +137,8 @@
         </form>
     </div>
 
-    <!-- Chart Visualization -->
-    <div class="card">
+    <!-- Chart Visualization Tab -->
+    <div id="section-tracker" class="card tab-content">
         <h2>Progress Tracker</h2>
         <label>Select exercise to view total volume progress:</label>
         <select id="chart-filter">
@@ -103,8 +147,8 @@
         <canvas id="progressChart"></canvas>
     </div>
 
-    <!-- History Table -->
-    <div class="card">
+    <!-- History Table Tab -->
+    <div id="section-history" class="card tab-content">
         <h2>History</h2>
         <table id="history-table">
             <thead>
@@ -139,16 +183,32 @@
         const datalist = document.getElementById('exercise-history');
         const exerciseInput = document.getElementById('exercise');
 
+        // Switch between tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            if (tabName === 'log') {
+                document.getElementById('section-log').classList.add('active');
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (tabName === 'tracker') {
+                document.getElementById('section-tracker').classList.add('active');
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                updateChart(); // Refresh chart when becoming visible
+            } else if (tabName === 'history') {
+                document.getElementById('section-history').classList.add('active');
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            }
+        }
+
         // Autofill Weight, Sets, and Reps from the most recent entry of the selected exercise
         exerciseInput.addEventListener('input', () => {
             const val = exerciseInput.value.trim();
             if (!val) return;
 
-            // Find matching entries (case-insensitive)
             const matching = workouts.filter(w => w.exercise.toLowerCase() === val.toLowerCase());
             
             if (matching.length > 0) {
-                // Sort matching entries chronologically to find the newest entry
                 const newest = matching.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
                 if (newest) {
                     document.getElementById('weight').value = newest.weight;
@@ -197,7 +257,6 @@
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
             
-            // Sort history to show newest items first
             const sorted = [...workouts].sort((a,b) => new Date(b.date) - new Date(a.date));
             
             sorted.forEach(w => {
@@ -217,28 +276,22 @@
         }
 
         function updateExerciseLists() {
-            // Get unique exercises from history and sort them alphabetically
             const exercises = [...new Set(workouts.map(w => w.exercise))]
                 .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
             
-            // 1. Update the Chart Filter Dropdown
             const currentSelection = filter.value;
             filter.innerHTML = '<option value="">-- Select Exercise --</option>';
-            
-            // 2. Update the Input Dropdown (Datalist)
             datalist.innerHTML = '';
 
             if (exercises.length === 0) return;
 
             exercises.forEach(ex => {
-                // Add to chart dropdown
                 const option = document.createElement('option');
                 option.value = ex;
                 option.textContent = ex;
                 if (ex === currentSelection) option.selected = true;
                 filter.appendChild(option);
 
-                // Add to input datalist
                 const dataOption = document.createElement('option');
                 dataOption.value = ex;
                 datalist.appendChild(dataOption);
@@ -259,7 +312,6 @@
 
             if (!selectedEx || workouts.length === 0) return;
 
-            // Filter data for the chosen exercise and sort chronologically
             const data = workouts
                 .filter(w => w.exercise === selectedEx)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -267,14 +319,11 @@
             if (data.length === 0) return;
 
             const dates = data.map(w => w.date);
-            
-            // Calculate Total Volume Lifted (Weight * Sets * Reps)
             const totalVolumes = data.map(w => {
                 const numSets = w.sets ? w.sets : 1;
                 return w.weight * numSets * w.reps;
             });
 
-            // Draw the line chart
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
