@@ -60,12 +60,18 @@
             </div>
             <div class="form-group">
                 <label>Exercise Name</label>
-                <input type="text" id="exercise" placeholder="e.g., Bench Press, Squat, Pull-ups" required>
+                <!-- list attribute connects this input to the datalist below for the dropdown -->
+                <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" required>
+                <datalist id="exercise-history"></datalist>
             </div>
             <div class="form-group" style="display: flex; gap: 10px;">
                 <div style="flex: 1;">
-                    <label>Weight (lbs/kg)</label>
+                    <label>Weight</label>
                     <input type="number" id="weight" step="0.5" required>
+                </div>
+                <div style="flex: 1;">
+                    <label>Sets</label>
+                    <input type="number" id="sets" required>
                 </div>
                 <div style="flex: 1;">
                     <label>Reps</label>
@@ -95,6 +101,7 @@
                     <th>Date</th>
                     <th>Exercise</th>
                     <th>Weight</th>
+                    <th>Sets</th>
                     <th>Reps</th>
                 </tr>
             </thead>
@@ -112,6 +119,7 @@
 
         const form = document.getElementById('workout-form');
         const filter = document.getElementById('chart-filter');
+        const datalist = document.getElementById('exercise-history');
 
         // Handle form submission
         form.addEventListener('submit', (e) => {
@@ -119,10 +127,11 @@
             const date = document.getElementById('date').value;
             const exercise = document.getElementById('exercise').value.trim();
             const weight = parseFloat(document.getElementById('weight').value);
+            const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
 
             // Save new workout
-            workouts.push({ date, exercise, weight, reps });
+            workouts.push({ date, exercise, weight, sets, reps });
             localStorage.setItem('workouts', JSON.stringify(workouts));
             
             updateUI();
@@ -134,7 +143,7 @@
 
         function updateUI() {
             updateTable();
-            updateDropdown();
+            updateExerciseLists();
             updateChart();
         }
 
@@ -147,24 +156,38 @@
             
             sorted.forEach(w => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${w.date}</td><td>${w.exercise}</td><td>${w.weight}</td><td>${w.reps}</td>`;
+                // Handle older entries that might not have a 'sets' value recorded
+                const displaySets = w.sets ? w.sets : '-';
+                tr.innerHTML = `<td>${w.date}</td><td>${w.exercise}</td><td>${w.weight}</td><td>${displaySets}</td><td>${w.reps}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateDropdown() {
+        function updateExerciseLists() {
+            // Get unique exercises from history
             const exercises = [...new Set(workouts.map(w => w.exercise))];
-            const currentSelection = filter.value;
             
+            // 1. Update the Chart Filter Dropdown
+            const currentSelection = filter.value;
+            filter.innerHTML = '<option value="">-- Select Exercise --</option>';
+            
+            // 2. Update the Input Dropdown (Datalist)
+            datalist.innerHTML = '';
+
             if (exercises.length === 0) return;
 
-            filter.innerHTML = '<option value="">-- Select Exercise --</option>';
             exercises.forEach(ex => {
+                // Add to chart dropdown
                 const option = document.createElement('option');
                 option.value = ex;
                 option.textContent = ex;
                 if (ex === currentSelection) option.selected = true;
                 filter.appendChild(option);
+
+                // Add to input datalist
+                const dataOption = document.createElement('option');
+                dataOption.value = ex;
+                datalist.appendChild(dataOption);
             });
 
             if (!filter.value && exercises.length > 0) {
