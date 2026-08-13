@@ -90,6 +90,7 @@
             font-size: 0.85em;
             margin-top: 0;
             width: auto;
+            font-weight: bold;
         }
         .delete-btn:hover { background: #dc2626; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -269,7 +270,7 @@
                     <td>${w.weight}</td>
                     <td>${displaySets}</td>
                     <td>${w.reps}</td>
-                    <td><button class="delete-btn" onclick="deleteEntry(${w.id})">Delete</button></td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${w.id})">X</button></td>
                 `;
                 tbody.appendChild(tr);
             });
