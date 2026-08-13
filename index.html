@@ -96,7 +96,7 @@
     <!-- Chart Visualization -->
     <div class="card">
         <h2>Progress Tracker</h2>
-        <label>Select exercise to view progress:</label>
+        <label>Select exercise to view total volume progress:</label>
         <select id="chart-filter">
             <option value="">-- No Data Yet --</option>
         </select>
@@ -247,7 +247,12 @@
             if (data.length === 0) return;
 
             const dates = data.map(w => w.date);
-            const weights = data.map(w => w.weight);
+            
+            // Calculate Total Volume Lifted (Weight * Sets * Reps)
+            const totalVolumes = data.map(w => {
+                const numSets = w.sets ? w.sets : 1;
+                return w.weight * numSets * w.reps;
+            });
 
             // Draw the line chart
             chartInstance = new Chart(ctx, {
@@ -255,8 +260,8 @@
                 data: {
                     labels: dates,
                     datasets: [{
-                        label: `${selectedEx} Progression`,
-                        data: weights,
+                        label: `${selectedEx} Total Volume`,
+                        data: totalVolumes,
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.1)',
                         tension: 0.3,
@@ -265,8 +270,23 @@
                 },
                 options: {
                     responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Total Lifted: ${context.parsed.y} lbs/kg`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: false }
+                        y: { 
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Total Weight Lifted (Weight × Sets × Reps)'
+                            }
+                        }
                     }
                 }
             });
