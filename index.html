@@ -197,8 +197,9 @@
         }
 
         function updateExerciseLists() {
-            // Get unique exercises from history
-            const exercises = [...new Set(workouts.map(w => w.exercise))];
+            // Get unique exercises from history and sort them alphabetically
+            const exercises = [...new Set(workouts.map(w => w.exercise))]
+                .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
             
             // 1. Update the Chart Filter Dropdown
             const currentSelection = filter.value;
