@@ -43,8 +43,20 @@
             transition: background 0.2s;
         }
         button:hover { background: #1d4ed8; }
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-top: 0;
+            width: auto;
+        }
+        .delete-btn:hover { background: #dc2626; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
         canvas { max-width: 100%; margin-top: 20px; }
     </style>
 </head>
@@ -60,7 +72,6 @@
             </div>
             <div class="form-group">
                 <label>Exercise Name</label>
-                <!-- list attribute connects this input to the datalist below for the dropdown -->
                 <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" required>
                 <datalist id="exercise-history"></datalist>
             </div>
@@ -103,6 +114,7 @@
                     <th>Weight</th>
                     <th>Sets</th>
                     <th>Reps</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -112,6 +124,11 @@
     <script>
         // Load existing data from browser storage, or start empty
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        
+        // Ensure every existing item has a unique ID for precise deletion
+        workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
+        localStorage.setItem('workouts', JSON.stringify(workouts));
+
         let chartInstance = null;
 
         // Default to today's date
@@ -130,8 +147,9 @@
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
 
-            // Save new workout
-            workouts.push({ date, exercise, weight, sets, reps });
+            // Save new workout with a unique ID
+            const newEntry = { id: Date.now(), date, exercise, weight, sets, reps };
+            workouts.push(newEntry);
             localStorage.setItem('workouts', JSON.stringify(workouts));
             
             updateUI();
@@ -140,6 +158,14 @@
         });
 
         filter.addEventListener('change', updateChart);
+
+        function deleteEntry(id) {
+            if (confirm("Are you sure you want to delete this set?")) {
+                workouts = workouts.filter(w => w.id !== id);
+                localStorage.setItem('workouts', JSON.stringify(workouts));
+                updateUI();
+            }
+        }
 
         function updateUI() {
             updateTable();
@@ -156,9 +182,16 @@
             
             sorted.forEach(w => {
                 const tr = document.createElement('tr');
-                // Handle older entries that might not have a 'sets' value recorded
                 const displaySets = w.sets ? w.sets : '-';
-                tr.innerHTML = `<td>${w.date}</td><td>${w.exercise}</td><td>${w.weight}</td><td>${displaySets}</td><td>${w.reps}</td>`;
+                
+                tr.innerHTML = `
+                    <td>${w.date}</td>
+                    <td>${w.exercise}</td>
+                    <td>${w.weight}</td>
+                    <td>${displaySets}</td>
+                    <td>${w.reps}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${w.id})">Delete</button></td>
+                `;
                 tbody.appendChild(tr);
             });
         }
@@ -203,12 +236,14 @@
                 chartInstance.destroy();
             }
 
-            if (!selectedEx) return;
+            if (!selectedEx || workouts.length === 0) return;
 
             // Filter data for the chosen exercise and sort chronologically
             const data = workouts
                 .filter(w => w.exercise === selectedEx)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (data.length === 0) return;
 
             const dates = data.map(w => w.date);
             const weights = data.map(w => w.weight);
