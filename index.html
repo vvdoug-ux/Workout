@@ -192,6 +192,15 @@
             padding: 0 5px;
         }
 
+        /* Add Exercise Container in Settings */
+        .add-exercise-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
         .setting-item {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
@@ -310,9 +319,9 @@
             <div style="flex: 1; min-width: 160px;">
                 <label for="chart-timeframe">Timeframe</label>
                 <select id="chart-timeframe">
-                    <option value="week">Last Week</option>
-                    <option value="month">Last Month</option>
-                    <option value="year" selected>Last Year</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year" selected>Year</option>
                     <option value="max">Max</option>
                 </select>
             </div>
@@ -345,6 +354,16 @@
                 <h2>Exercise Settings</h2>
                 <button class="close-modal-btn" onclick="closeSettings()">&times;</button>
             </div>
+
+            <!-- Add New Exercise Input Form -->
+            <div class="add-exercise-box">
+                <label style="font-weight: bold; font-size: 0.9em; margin-bottom: 6px; display: block;">Add New Exercise</label>
+                <form id="add-exercise-form" onsubmit="addNewExerciseFromSettings(event)" style="display: flex; gap: 8px;">
+                    <input type="text" id="new-exercise-input" placeholder="Enter exercise name..." style="flex: 1;" required>
+                    <button type="submit" style="width: auto; margin-top: 0; padding: 0 16px; font-size: 0.9em; white-space: nowrap;">+ Add</button>
+                </form>
+            </div>
+
             <div id="settings-exercise-list"></div>
         </div>
     </div>
@@ -849,6 +868,19 @@
             document.getElementById('settings-modal').classList.remove('active');
         }
 
+        function addNewExerciseFromSettings(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-exercise-input');
+            const exName = input.value.trim();
+
+            if (exName) {
+                ensureMeta(exName);
+                input.value = '';
+                updateUI();
+                renderSettingsList();
+            }
+        }
+
         function renderSettingsList() {
             const container = document.getElementById('settings-exercise-list');
             container.innerHTML = '';
@@ -859,7 +891,7 @@
             ])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
             if (allExercises.length === 0) {
-                container.innerHTML = '<p style="color: #64748b;">No exercises logged yet.</p>';
+                container.innerHTML = '<p style="color: #64748b;">No exercises added yet.</p>';
                 return;
             }
 
