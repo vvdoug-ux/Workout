@@ -358,13 +358,21 @@
         const exerciseInput = document.getElementById('exercise');
         const starBtn = document.getElementById('star-btn');
 
-        // Get metadata for exercise or set default
+        // Read metadata without creating a new entry automatically
         function getMeta(exName) {
             if (!exName) return { favorite: false, categories: [] };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) return exerciseMeta[key];
-            
+            return { favorite: false, categories: [] };
+        }
+
+        // Explicitly create/get metadata only when saving
+        function ensureMeta(exName) {
+            if (!exName) return null;
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            if (key) return exerciseMeta[key];
             exerciseMeta[exName] = { favorite: false, categories: [] };
+            saveMeta();
             return exerciseMeta[exName];
         }
 
@@ -427,11 +435,11 @@
             const val = exerciseInput.value.trim();
             if (!val) return;
             
-            const meta = getMeta(val);
+            const meta = ensureMeta(val);
             meta.favorite = !meta.favorite;
             saveMeta();
             updateStarButton();
-            updateFavoritesList();
+            updateUI();
         }
 
         exerciseInput.addEventListener('input', () => {
@@ -440,7 +448,7 @@
             updateStarButton();
         });
 
-        // Handle form submission
+        // Handle form submission - ONLY save exercise when form is submitted
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const date = document.getElementById('date').value;
@@ -449,9 +457,8 @@
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
 
-            // Ensure exercise meta exists
-            getMeta(exercise);
-            saveMeta();
+            // Save exercise metadata only when logging/saving
+            ensureMeta(exercise);
 
             // Save new workout
             const newEntry = { id: Date.now(), date, exercise, weight, sets, reps };
@@ -643,11 +650,11 @@
             }
 
             allExercises.forEach(ex => {
-                const meta = getMeta(ex);
+                const meta = ensureMeta(ex);
                 const item = document.createElement('div');
                 item.className = 'setting-item';
 
-                // Top Row: Edit Name & Favorite Toggle
+                // Top Row: Name Input, Favorite Star, and Red Delete X Button
                 const topRow = document.createElement('div');
                 topRow.className = 'setting-row';
 
@@ -655,13 +662,7 @@
                 nameInput.type = 'text';
                 nameInput.value = ex;
                 nameInput.style.flex = '1';
-
-                const saveBtn = document.createElement('button');
-                saveBtn.textContent = 'Save';
-                saveBtn.style.width = 'auto';
-                saveBtn.style.padding = '10px 14px';
-                saveBtn.style.marginTop = '0';
-                saveBtn.onclick = () => {
+                nameInput.onchange = () => {
                     const newName = nameInput.value.trim();
                     if (newName && newName !== ex) {
                         renameExercise(ex, newName);
@@ -680,9 +681,21 @@
                     updateStarButton();
                 };
 
+                // Red X Button to Delete Exercise & Category Metadata
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'X';
+                deleteBtn.type = 'button';
+                deleteBtn.title = 'Delete Exercise';
+                deleteBtn.onclick = () => {
+                    if (confirm(`Are you sure you want to delete "${ex}" and all its history?`)) {
+                        deleteExercise(ex);
+                    }
+                };
+
                 topRow.appendChild(nameInput);
-                topRow.appendChild(saveBtn);
                 topRow.appendChild(favBtn);
+                topRow.appendChild(deleteBtn);
 
                 // Category Chips Selector
                 const catLabel = document.createElement('label');
@@ -717,7 +730,6 @@
         }
 
         function renameExercise(oldName, newName) {
-            // Update all workout records
             workouts.forEach(w => {
                 if (w.exercise.toLowerCase() === oldName.toLowerCase()) {
                     w.exercise = newName;
@@ -725,7 +737,6 @@
             });
             localStorage.setItem('workouts', JSON.stringify(workouts));
 
-            // Transfer metadata
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === oldName.toLowerCase());
             if (key) {
                 exerciseMeta[newName] = exerciseMeta[key];
@@ -734,6 +745,22 @@
                 exerciseMeta[newName] = { favorite: false, categories: [] };
             }
             saveMeta();
+
+            updateUI();
+            renderSettingsList();
+        }
+
+        function deleteExercise(exName) {
+            // Remove workout history for this exercise
+            workouts = workouts.filter(w => w.exercise.toLowerCase() !== exName.toLowerCase());
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+
+            // Remove metadata
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            if (key) {
+                delete exerciseMeta[key];
+                saveMeta();
+            }
 
             updateUI();
             renderSettingsList();
