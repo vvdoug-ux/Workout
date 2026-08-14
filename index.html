@@ -21,14 +21,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .nav-tabs {
-            display: flex;
             gap: 8px;
-            flex: 1;
+            margin-bottom: 20px;
         }
         
         .tab-btn {
@@ -44,24 +38,10 @@
             text-align: center;
             transition: all 0.2s;
             margin-top: 0;
+            width: 100%;
         }
         .tab-btn:hover { background: #cbd5e1; }
         .tab-btn.active { background: #2563eb; color: white; }
-
-        /* Settings Icon Button */
-        .settings-btn {
-            background: #e2e8f0;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            padding: 10px 12px;
-            cursor: pointer;
-            color: #475569;
-            width: auto;
-            margin-top: 0;
-            transition: background 0.2s;
-        }
-        .settings-btn:hover { background: #cbd5e1; }
 
         /* Section Visibility */
         .tab-content { display: none; }
@@ -97,28 +77,32 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Star Favorite Button Next to Exercise Input */
+        /* Styled Favorite Button (Matching Delete Button dimensions & size) */
         .star-btn {
-            width: 46px;
-            min-width: 46px;
-            height: 42px;
-            background: #f1f5f9;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 20px;
+            background: #64748b; /* Grayish background by default */
+            color: #ffffff;      /* White star */
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-top: 0;
-            color: #94a3b8;
-            transition: all 0.2s;
-            padding: 0;
+            width: auto;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .star-btn:hover {
+            background: #475569;
         }
         .star-btn.active {
-            color: #eab308;
-            background: #fef9c3;
-            border-color: #fde047;
+            background: #eab308; /* Solid yellow background when active */
+            color: #ffffff;      /* White star */
+        }
+        .star-btn.active:hover {
+            background: #ca8a04;
         }
 
         /* Favorites Quick Selection Section */
@@ -245,14 +229,12 @@
 </head>
 <body>
 
-    <!-- Top Navigation Header -->
+    <!-- Top Navigation Header (4 Equal-sized buttons) -->
     <div class="top-header">
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
-            <button class="tab-btn" onclick="switchTab('tracker')">Progress Tracker</button>
-            <button class="tab-btn" onclick="switchTab('history')">History</button>
-        </div>
-        <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
+        <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
+        <button class="tab-btn" onclick="switchTab('tracker')">Progress Tracker</button>
+        <button class="tab-btn" onclick="switchTab('history')">History</button>
+        <button class="tab-btn" onclick="openSettings()" title="Settings">⚙️ Settings</button>
     </div>
 
     <!-- Log Exercise Section -->
@@ -266,9 +248,9 @@
                 </div>
                 <div class="form-group">
                     <label>Exercise Name</label>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
                         <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" required>
-                        <button type="button" id="star-btn" class="star-btn" onclick="toggleFavoriteFromForm()" title="Favorite Exercise">☆</button>
+                        <button type="button" id="star-btn" class="star-btn" onclick="toggleFavoriteFromForm()" title="Favorite Exercise">★</button>
                     </div>
                     <datalist id="exercise-history"></datalist>
                 </div>
@@ -286,7 +268,7 @@
                         <input type="number" id="reps" required>
                     </div>
                 </div>
-                <button type="submit">Save Set</button>
+                <button type="submit">Save</button>
             </form>
         </div>
 
@@ -385,16 +367,18 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
+            const buttons = document.querySelectorAll('.top-header .tab-btn');
+
             if (tabName === 'log') {
                 document.getElementById('section-log').classList.add('active');
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                buttons[0].classList.add('active');
             } else if (tabName === 'tracker') {
                 document.getElementById('section-tracker').classList.add('active');
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                buttons[1].classList.add('active');
                 updateChart();
             } else if (tabName === 'history') {
                 document.getElementById('section-history').classList.add('active');
-                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                buttons[2].classList.add('active');
             }
         }
 
@@ -416,18 +400,18 @@
         // Update star favorite button state next to exercise input
         function updateStarButton() {
             const val = exerciseInput.value.trim();
+            starBtn.textContent = '★';
+
             if (!val) {
                 starBtn.classList.remove('active');
-                starBtn.textContent = '☆';
                 return;
             }
+
             const meta = getMeta(val);
             if (meta.favorite) {
                 starBtn.classList.add('active');
-                starBtn.textContent = '★';
             } else {
                 starBtn.classList.remove('active');
-                starBtn.textContent = '☆';
             }
         }
 
@@ -442,9 +426,17 @@
             updateUI();
         }
 
+        // Handle exercise input change & clear fields when empty
         exerciseInput.addEventListener('input', () => {
             const val = exerciseInput.value.trim();
-            if (val) autofillExerciseData(val);
+            if (val) {
+                autofillExerciseData(val);
+            } else {
+                // Clear weight, sets, and reps if exercise field is empty
+                document.getElementById('weight').value = '';
+                document.getElementById('sets').value = '';
+                document.getElementById('reps').value = '';
+            }
             updateStarButton();
         });
 
@@ -588,17 +580,18 @@
                 return w.weight * numSets * w.reps;
             });
 
+            // Render Bar Graph
             chartInstance = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: dates,
                     datasets: [{
                         label: `${selectedEx} Total Volume`,
                         data: totalVolumes,
+                        backgroundColor: 'rgba(37, 99, 235, 0.75)',
                         borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        tension: 0.3,
-                        fill: true
+                        borderWidth: 1,
+                        borderRadius: 4
                     }]
                 },
                 options: {
@@ -614,7 +607,7 @@
                     },
                     scales: {
                         y: { 
-                            beginAtZero: false,
+                            beginAtZero: true,
                             title: {
                                 display: true,
                                 text: 'Total Weight Lifted'
@@ -671,7 +664,7 @@
 
                 const favBtn = document.createElement('button');
                 favBtn.className = 'star-btn' + (meta.favorite ? ' active' : '');
-                favBtn.textContent = meta.favorite ? '★' : '☆';
+                favBtn.textContent = '★';
                 favBtn.type = 'button';
                 favBtn.onclick = () => {
                     meta.favorite = !meta.favorite;
@@ -681,7 +674,7 @@
                     updateStarButton();
                 };
 
-                // Red X Button to Delete Exercise & Category Metadata
+                // Red X Button to Delete Exercise
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
                 deleteBtn.textContent = 'X';
@@ -751,11 +744,9 @@
         }
 
         function deleteExercise(exName) {
-            // Remove workout history for this exercise
             workouts = workouts.filter(w => w.exercise.toLowerCase() !== exName.toLowerCase());
             localStorage.setItem('workouts', JSON.stringify(workouts));
 
-            // Remove metadata
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
                 delete exerciseMeta[key];
