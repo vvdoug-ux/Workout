@@ -90,14 +90,14 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Styled Favorite Button (Sized to match Delete Button) */
+        /* Favorite Star Button (No background, light gray or yellow star) */
         .star-btn {
-            background: #e2e8f0; /* Lighter gray background */
-            color: #ffffff;      /* White star */
+            background: transparent;
+            color: #cbd5e1; /* Light gray star by default */
             border: none;
-            padding: 6px 10px;
+            padding: 6px;
             border-radius: 4px;
-            font-size: 0.85em;
+            font-size: 1.2em;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -105,17 +105,17 @@
             margin-top: 0;
             width: auto;
             font-weight: bold;
-            transition: background 0.2s;
+            transition: color 0.2s;
         }
         .star-btn:hover {
-            background: #cbd5e1;
+            color: #94a3b8;
         }
         .star-btn.active {
-            background: #eab308; /* Solid yellow background when active */
-            color: #ffffff;      /* White star */
+            background: transparent;
+            color: #eab308; /* Yellow star when active */
         }
         .star-btn.active:hover {
-            background: #ca8a04;
+            color: #ca8a04;
         }
 
         /* Favorites Quick Selection Section */
@@ -245,7 +245,7 @@
     <!-- Top Navigation Header -->
     <div class="top-header">
         <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
-        <button class="tab-btn" onclick="switchTab('tracker')">Progress Tracker</button>
+        <button class="tab-btn" onclick="switchTab('tracker')">Progress</button>
         <button class="tab-btn" onclick="switchTab('history')">History</button>
         <button class="tab-btn settings-tab-btn" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
@@ -332,8 +332,17 @@
     </div>
 
     <script>
-        // Alphabetically sorted categories with "Lower Body" replacing "Legs"
+        // Alphabetically sorted categories
         const CATEGORIES = ["Cardio", "Core", "Full Body", "Lower Body", "Upper Body"];
+
+        // Subcategories organized by Category and sorted alphabetically
+        const SUBCATEGORIES = {
+            "Cardio": [],
+            "Core": ["Abs", "Lower Back", "Obliques"],
+            "Full Body": [],
+            "Lower Body": ["Ad/Abductors", "Calves", "Glutes", "Hamstrings", "Quads"],
+            "Upper Body": ["Back", "Biceps", "Chest", "Forearms", "Shoulders", "Triceps"]
+        };
 
         // Load existing data from browser storage
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
@@ -356,18 +365,21 @@
 
         // Read metadata without creating a new entry automatically
         function getMeta(exName) {
-            if (!exName) return { favorite: false, categories: [] };
+            if (!exName) return { favorite: false, categories: [], subcategories: [] };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) return exerciseMeta[key];
-            return { favorite: false, categories: [] };
+            return { favorite: false, categories: [], subcategories: [] };
         }
 
         // Explicitly create/get metadata only when saving
         function ensureMeta(exName) {
             if (!exName) return null;
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
-            if (key) return exerciseMeta[key];
-            exerciseMeta[exName] = { favorite: false, categories: [] };
+            if (key) {
+                if (!exerciseMeta[key].subcategories) exerciseMeta[key].subcategories = [];
+                return exerciseMeta[key];
+            }
+            exerciseMeta[exName] = { favorite: false, categories: [], subcategories: [] };
             saveMeta();
             return exerciseMeta[exName];
         }
@@ -596,7 +608,6 @@
                 data: {
                     labels: dates,
                     datasets: [{
-                        label: `${selectedEx} Total Volume`,
                         data: totalVolumes,
                         backgroundColor: 'rgba(37, 99, 235, 0.75)',
                         borderColor: '#2563eb',
@@ -607,20 +618,30 @@
                 options: {
                     responsive: true,
                     plugins: {
+                        legend: { display: false },
+                        title: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Total Lifted: ${context.parsed.y} lbs/kg`;
+                                    return `Total Weight: ${context.parsed.y} lbs/kg`;
                                 }
                             }
                         }
                     },
                     scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
                         y: { 
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Total Weight Lifted'
+                                text: 'Total Weight'
+                            },
+                            grid: {
+                                display: false
                             }
                         }
                     }
@@ -654,6 +675,8 @@
 
             allExercises.forEach(ex => {
                 const meta = ensureMeta(ex);
+                if (!meta.subcategories) meta.subcategories = [];
+
                 const item = document.createElement('div');
                 item.className = 'setting-item';
 
@@ -714,6 +737,9 @@
                     chip.onclick = () => {
                         if (isSelected) {
                             meta.categories = meta.categories.filter(c => c !== cat);
+                            // Clean up subcategories that belonged to the unselected category
+                            const allowedSubs = SUBCATEGORIES[cat] || [];
+                            meta.subcategories = meta.subcategories.filter(s => !allowedSubs.includes(s));
                         } else {
                             meta.categories.push(cat);
                         }
@@ -726,6 +752,45 @@
                 item.appendChild(topRow);
                 item.appendChild(catLabel);
                 item.appendChild(chipsDiv);
+
+                // Subcategories Chips Selector (Visible only if parent categories with subcategories are selected)
+                const availableSubcats = [];
+                meta.categories.forEach(cat => {
+                    if (SUBCATEGORIES[cat]) {
+                        availableSubcats.push(...SUBCATEGORIES[cat]);
+                    }
+                });
+
+                if (availableSubcats.length > 0) {
+                    const sortedSubcats = [...new Set(availableSubcats)].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+                    const subCatLabel = document.createElement('label');
+                    subCatLabel.textContent = 'Subcategories:';
+                    subCatLabel.style.marginTop = '10px';
+
+                    const subChipsDiv = document.createElement('div');
+                    subChipsDiv.className = 'category-chips';
+
+                    sortedSubcats.forEach(sub => {
+                        const subChip = document.createElement('div');
+                        const isSubSelected = meta.subcategories.includes(sub);
+                        subChip.className = 'category-chip' + (isSubSelected ? ' selected' : '');
+                        subChip.textContent = sub;
+                        subChip.onclick = () => {
+                            if (isSubSelected) {
+                                meta.subcategories = meta.subcategories.filter(s => s !== sub);
+                            } else {
+                                meta.subcategories.push(sub);
+                            }
+                            saveMeta();
+                            renderSettingsList();
+                        };
+                        subChipsDiv.appendChild(subChip);
+                    });
+
+                    item.appendChild(subCatLabel);
+                    item.appendChild(subChipsDiv);
+                }
 
                 container.appendChild(item);
             });
@@ -744,7 +809,7 @@
                 exerciseMeta[newName] = exerciseMeta[key];
                 if (key !== newName) delete exerciseMeta[key];
             } else {
-                exerciseMeta[newName] = { favorite: false, categories: [] };
+                exerciseMeta[newName] = { favorite: false, categories: [], subcategories: [] };
             }
             saveMeta();
 
