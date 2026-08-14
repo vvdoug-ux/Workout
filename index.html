@@ -351,6 +351,23 @@
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
         
+        // Auto-migrate legacy "Legs" category names stored in local storage to "Lower Body"
+        let metaUpdated = false;
+        Object.keys(exerciseMeta).forEach(key => {
+            if (exerciseMeta[key].categories) {
+                exerciseMeta[key].categories = exerciseMeta[key].categories.map(c => {
+                    if (c === "Legs") {
+                        metaUpdated = true;
+                        return "Lower Body";
+                    }
+                    return c;
+                });
+            }
+        });
+        if (metaUpdated) {
+            localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
+        }
+
         // Ensure every existing item has a unique ID for deletion
         workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
         localStorage.setItem('workouts', JSON.stringify(workouts));
@@ -523,15 +540,18 @@
 
             favExercises.forEach(ex => {
                 const meta = getMeta(ex);
-                if (meta.categories && meta.categories.length > 0) {
-                    meta.categories.forEach(cat => {
-                        if (categorizedFavs[cat]) {
-                            categorizedFavs[cat].push(ex);
-                        } else {
-                            categorizedFavs["Uncategorized"].push(ex);
-                        }
+                // Standardize and filter active categories
+                const activeCats = (meta.categories || [])
+                    .map(c => c === "Legs" ? "Lower Body" : c)
+                    .filter(c => CATEGORIES.includes(c));
+
+                if (activeCats.length > 0) {
+                    // Place into assigned active categories
+                    [...new Set(activeCats)].forEach(cat => {
+                        categorizedFavs[cat].push(ex);
                     });
                 } else {
+                    // Only place in Uncategorized if no valid active categories exist
                     categorizedFavs["Uncategorized"].push(ex);
                 }
             });
@@ -564,7 +584,7 @@
                         const btn = document.createElement('button');
                         btn.className = 'fav-btn';
                         btn.type = 'button';
-                        btn.textContent = ex; // Button shows exercise name without star inside
+                        btn.textContent = ex;
                         btn.onclick = () => selectFavorite(ex);
                         gridDiv.appendChild(btn);
                     });
@@ -806,7 +826,7 @@
                 item.appendChild(catLabel);
                 item.appendChild(chipsDiv);
 
-                // Subcategories Chips Selector (Visible only if parent categories with subcategories are selected)
+                // Subcategories Chips Selector
                 const availableSubcats = [];
                 meta.categories.forEach(cat => {
                     if (SUBCATEGORIES[cat]) {
