@@ -293,7 +293,7 @@
     <!-- Chart Visualization Tab -->
     <div id="section-tracker" class="card tab-content">
         <h2>Progress Tracker</h2>
-        <label>Select exercise to view total volume progress:</label>
+        <label>Select exercise to view progress:</label>
         <select id="chart-filter">
             <option value="">-- No Data Yet --</option>
         </select>
@@ -699,11 +699,18 @@
 
             if (data.length === 0) return;
 
+            // Check if the selected exercise is categorized as "Bodyweight"
+            const meta = getMeta(selectedEx);
+            const isBodyweight = meta.categories && meta.categories.includes("Bodyweight");
+
             const dates = data.map(w => w.date);
             const totalVolumes = data.map(w => {
                 const numSets = w.sets ? w.sets : 1;
-                return w.weight * numSets * w.reps;
+                // Exclude weight from calculation if it's a Bodyweight exercise
+                return isBodyweight ? (numSets * w.reps) : (w.weight * numSets * w.reps);
             });
+
+            const yAxisLabel = isBodyweight ? 'Total Volume' : 'Total Weight';
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
@@ -725,7 +732,9 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Total Weight: ${context.parsed.y} lbs/kg`;
+                                    return isBodyweight 
+                                        ? `Total Volume: ${context.parsed.y} reps` 
+                                        : `Total Weight: ${context.parsed.y} lbs/kg`;
                                 }
                             }
                         }
@@ -740,7 +749,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Total Weight'
+                                text: yAxisLabel
                             },
                             grid: {
                                 display: false
