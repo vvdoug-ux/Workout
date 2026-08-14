@@ -140,6 +140,13 @@
             margin-top: 0;
         }
         .fav-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+        
+        /* Faded state for exercises already logged today */
+        .fav-btn.logged {
+            opacity: 0.45;
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
 
         /* Settings Modal Overlay */
         .modal-overlay {
@@ -562,6 +569,8 @@
                 return;
             }
 
+            const todayStr = getPacificDateString();
+
             // Map favorites by category (using FAVORITE_CATEGORIES which excludes Bodyweight)
             const categorizedFavs = {};
             FAVORITE_CATEGORIES.forEach(cat => categorizedFavs[cat] = []);
@@ -614,6 +623,17 @@
                         btn.className = 'fav-btn';
                         btn.type = 'button';
                         btn.textContent = ex;
+
+                        // Check if exercise has already been logged today
+                        const isLoggedToday = workouts.some(w => 
+                            w.exercise.toLowerCase() === ex.toLowerCase() && w.date === todayStr
+                        );
+
+                        if (isLoggedToday) {
+                            btn.classList.add('logged');
+                            btn.title = 'Already logged today';
+                        }
+
                         btn.onclick = () => selectFavorite(ex);
                         gridDiv.appendChild(btn);
                     });
@@ -693,9 +713,7 @@
 
             if (!selectedEx || workouts.length === 0) return;
 
-            const data = workouts
-                .filter(w => w.exercise === selectedEx)
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            const data = workouts.filter(w => w.exercise === selectedEx);
 
             if (data.length === 0) return;
 
@@ -703,12 +721,22 @@
             const meta = getMeta(selectedEx);
             const isBodyweight = meta.categories && meta.categories.includes("Bodyweight");
 
-            const dates = data.map(w => w.date);
-            const totalVolumes = data.map(w => {
+            // Combine/aggregate totals for multiple instances logged on the same date
+            const dateTotals = {};
+            data.forEach(w => {
                 const numSets = w.sets ? w.sets : 1;
-                // Exclude weight from calculation if it's a Bodyweight exercise
-                return isBodyweight ? (numSets * w.reps) : (w.weight * numSets * w.reps);
+                const volume = isBodyweight ? (numSets * w.reps) : (w.weight * numSets * w.reps);
+                
+                if (dateTotals[w.date]) {
+                    dateTotals[w.date] += volume;
+                } else {
+                    dateTotals[w.date] = volume;
+                }
             });
+
+            // Sort dates chronologically
+            const dates = Object.keys(dateTotals).sort((a, b) => new Date(a) - new Date(b));
+            const totalVolumes = dates.map(d => dateTotals[d]);
 
             const yAxisLabel = isBodyweight ? 'Total Volume' : 'Total Weight';
 
