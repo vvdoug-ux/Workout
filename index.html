@@ -136,12 +136,10 @@
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
             width: auto;
             margin-top: 0;
         }
         .fav-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
-        .fav-btn span { color: #eab308; }
 
         /* Settings Modal Overlay */
         .modal-overlay {
@@ -288,7 +286,7 @@
         <!-- Favorites Quick Select Card -->
         <div class="card">
             <h2>Favorites</h2>
-            <div id="favorites-list" class="favorites-grid"></div>
+            <div id="favorites-list"></div>
         </div>
     </div>
 
@@ -332,6 +330,11 @@
     </div>
 
     <script>
+        // Helper function to get current date in Pacific Time (America/Los_Angeles)
+        function getPacificDateString() {
+            return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+        }
+
         // Alphabetically sorted categories
         const CATEGORIES = ["Cardio", "Core", "Full Body", "Lower Body", "Upper Body"];
 
@@ -354,8 +357,8 @@
 
         let chartInstance = null;
 
-        // Default to today's date
-        document.getElementById('date').valueAsDate = new Date();
+        // Default date set to Pacific Time
+        document.getElementById('date').value = getPacificDateString();
 
         const form = document.getElementById('workout-form');
         const filter = document.getElementById('chart-filter');
@@ -482,7 +485,7 @@
             
             updateUI();
             form.reset();
-            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('date').value = getPacificDateString();
             updateStarButton();
         });
 
@@ -513,13 +516,63 @@
                 return;
             }
 
-            favExercises.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).forEach(ex => {
-                const btn = document.createElement('button');
-                btn.className = 'fav-btn';
-                btn.type = 'button';
-                btn.innerHTML = `<span>★</span> ${ex}`;
-                btn.onclick = () => selectFavorite(ex);
-                container.appendChild(btn);
+            // Map favorites by category
+            const categorizedFavs = {};
+            CATEGORIES.forEach(cat => categorizedFavs[cat] = []);
+            categorizedFavs["Uncategorized"] = [];
+
+            favExercises.forEach(ex => {
+                const meta = getMeta(ex);
+                if (meta.categories && meta.categories.length > 0) {
+                    meta.categories.forEach(cat => {
+                        if (categorizedFavs[cat]) {
+                            categorizedFavs[cat].push(ex);
+                        } else {
+                            categorizedFavs["Uncategorized"].push(ex);
+                        }
+                    });
+                } else {
+                    categorizedFavs["Uncategorized"].push(ex);
+                }
+            });
+
+            // Display favorites arranged by Category
+            const allCatKeys = [...CATEGORIES, "Uncategorized"];
+
+            allCatKeys.forEach(cat => {
+                const exercisesInCat = categorizedFavs[cat];
+                if (exercisesInCat && exercisesInCat.length > 0) {
+                    exercisesInCat.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                    const uniqueEx = [...new Set(exercisesInCat)];
+
+                    const groupDiv = document.createElement('div');
+                    groupDiv.style.marginBottom = '14px';
+
+                    const catHeader = document.createElement('div');
+                    catHeader.textContent = cat;
+                    catHeader.style.fontSize = '0.8em';
+                    catHeader.style.fontWeight = 'bold';
+                    catHeader.style.color = '#64748b';
+                    catHeader.style.textTransform = 'uppercase';
+                    catHeader.style.letterSpacing = '0.5px';
+                    catHeader.style.marginBottom = '6px';
+
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'favorites-grid';
+
+                    uniqueEx.forEach(ex => {
+                        const btn = document.createElement('button');
+                        btn.className = 'fav-btn';
+                        btn.type = 'button';
+                        btn.textContent = ex; // Button shows exercise name without star inside
+                        btn.onclick = () => selectFavorite(ex);
+                        gridDiv.appendChild(btn);
+                    });
+
+                    groupDiv.appendChild(catHeader);
+                    groupDiv.appendChild(gridDiv);
+                    container.appendChild(groupDiv);
+                }
             });
         }
 
