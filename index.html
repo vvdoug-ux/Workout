@@ -16,12 +16,21 @@
             color: #333; 
         }
         
-        /* Top Navigation Tabs */
+        /* Top Navigation Header */
+        .top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
         .nav-tabs {
             display: flex;
             gap: 8px;
-            margin-bottom: 20px;
+            flex: 1;
         }
+        
         .tab-btn {
             flex: 1;
             padding: 12px 6px;
@@ -36,21 +45,27 @@
             transition: all 0.2s;
             margin-top: 0;
         }
-        .tab-btn:hover {
-            background: #cbd5e1;
+        .tab-btn:hover { background: #cbd5e1; }
+        .tab-btn.active { background: #2563eb; color: white; }
+
+        /* Settings Icon Button */
+        .settings-btn {
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            padding: 10px 12px;
+            cursor: pointer;
+            color: #475569;
+            width: auto;
+            margin-top: 0;
+            transition: background 0.2s;
         }
-        .tab-btn.active {
-            background: #2563eb;
-            color: white;
-        }
+        .settings-btn:hover { background: #cbd5e1; }
 
         /* Section Visibility */
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         .card { 
             background: white; 
@@ -59,9 +74,10 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             margin-bottom: 20px; 
         }
-        h2 { margin-top: 0; color: #1a1a1a; }
+        h2, h3 { margin-top: 0; color: #1a1a1a; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        
         input, select, button { 
             width: 100%; 
             padding: 10px; 
@@ -80,6 +96,135 @@
             transition: background 0.2s;
         }
         button:hover { background: #1d4ed8; }
+
+        /* Star Favorite Button Next to Exercise Input */
+        .star-btn {
+            width: 46px;
+            min-width: 46px;
+            height: 42px;
+            background: #f1f5f9;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0;
+            color: #94a3b8;
+            transition: all 0.2s;
+            padding: 0;
+        }
+        .star-btn.active {
+            color: #eab308;
+            background: #fef9c3;
+            border-color: #fde047;
+        }
+
+        /* Favorites Quick Selection Section */
+        .favorites-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .fav-btn {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: auto;
+            margin-top: 0;
+        }
+        .fav-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+        .fav-btn span { color: #eab308; }
+
+        /* Settings Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            max-width: 550px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .modal-header h2 { margin: 0; }
+        .close-modal-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+            width: auto;
+            margin: 0;
+            padding: 0 5px;
+        }
+
+        .setting-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        .setting-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .category-chip {
+            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            user-select: none;
+            color: #475569;
+        }
+        .category-chip.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
         .delete-btn {
             background: #ef4444;
             color: white;
@@ -100,42 +245,56 @@
 </head>
 <body>
 
-    <!-- Top Navigation Buttons -->
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
-        <button class="tab-btn" onclick="switchTab('tracker')">Progress Tracker</button>
-        <button class="tab-btn" onclick="switchTab('history')">History</button>
+    <!-- Top Navigation Header -->
+    <div class="top-header">
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
+            <button class="tab-btn" onclick="switchTab('tracker')">Progress Tracker</button>
+            <button class="tab-btn" onclick="switchTab('history')">History</button>
+        </div>
+        <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
 
-    <!-- Input Form Tab -->
-    <div id="section-log" class="card tab-content active">
-        <h2>Log Exercise</h2>
-        <form id="workout-form">
-            <div class="form-group">
-                <label>Date</label>
-                <input type="date" id="date" required>
-            </div>
-            <div class="form-group">
-                <label>Exercise Name</label>
-                <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" required>
-                <datalist id="exercise-history"></datalist>
-            </div>
-            <div class="form-group" style="display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label>Weight</label>
-                    <input type="number" id="weight" step="0.5" required>
+    <!-- Log Exercise Section -->
+    <div id="section-log" class="tab-content active">
+        <div class="card">
+            <h2>Log Exercise</h2>
+            <form id="workout-form">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date" required>
                 </div>
-                <div style="flex: 1;">
-                    <label>Sets</label>
-                    <input type="number" id="sets" required>
+                <div class="form-group">
+                    <label>Exercise Name</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" required>
+                        <button type="button" id="star-btn" class="star-btn" onclick="toggleFavoriteFromForm()" title="Favorite Exercise">☆</button>
+                    </div>
+                    <datalist id="exercise-history"></datalist>
                 </div>
-                <div style="flex: 1;">
-                    <label>Reps</label>
-                    <input type="number" id="reps" required>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Weight</label>
+                        <input type="number" id="weight" step="0.5" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Sets</label>
+                        <input type="number" id="sets" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Reps</label>
+                        <input type="number" id="reps" required>
+                    </div>
                 </div>
-            </div>
-            <button type="submit">Save Set</button>
-        </form>
+                <button type="submit">Save Set</button>
+            </form>
+        </div>
+
+        <!-- Favorites Quick Select Card -->
+        <div class="card">
+            <h2>Favorites</h2>
+            <div id="favorites-list" class="favorites-grid"></div>
+        </div>
     </div>
 
     <!-- Chart Visualization Tab -->
@@ -166,11 +325,25 @@
         </table>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Exercise Settings</h2>
+                <button class="close-modal-btn" onclick="closeSettings()">&times;</button>
+            </div>
+            <div id="settings-exercise-list"></div>
+        </div>
+    </div>
+
     <script>
-        // Load existing data from browser storage, or start empty
+        const CATEGORIES = ["Cardio", "Upper Body", "Legs", "Core", "Full Body"];
+
+        // Load existing data from browser storage
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
         
-        // Ensure every existing item has a unique ID for precise deletion
+        // Ensure every existing item has a unique ID for deletion
         workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
         localStorage.setItem('workouts', JSON.stringify(workouts));
 
@@ -183,6 +356,21 @@
         const filter = document.getElementById('chart-filter');
         const datalist = document.getElementById('exercise-history');
         const exerciseInput = document.getElementById('exercise');
+        const starBtn = document.getElementById('star-btn');
+
+        // Get metadata for exercise or set default
+        function getMeta(exName) {
+            if (!exName) return { favorite: false, categories: [] };
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            if (key) return exerciseMeta[key];
+            
+            exerciseMeta[exName] = { favorite: false, categories: [] };
+            return exerciseMeta[exName];
+        }
+
+        function saveMeta() {
+            localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
+        }
 
         // Switch between tabs
         function switchTab(tabName) {
@@ -195,19 +383,17 @@
             } else if (tabName === 'tracker') {
                 document.getElementById('section-tracker').classList.add('active');
                 document.querySelectorAll('.tab-btn')[1].classList.add('active');
-                updateChart(); // Refresh chart when becoming visible
+                updateChart();
             } else if (tabName === 'history') {
                 document.getElementById('section-history').classList.add('active');
                 document.querySelectorAll('.tab-btn')[2].classList.add('active');
             }
         }
 
-        // Autofill Weight, Sets, and Reps from the most recent entry of the selected exercise
-        exerciseInput.addEventListener('input', () => {
-            const val = exerciseInput.value.trim();
-            if (!val) return;
-
-            const matching = workouts.filter(w => w.exercise.toLowerCase() === val.toLowerCase());
+        // Autofill Weight, Sets, and Reps from the most recent entry
+        function autofillExerciseData(exName) {
+            if (!exName) return;
+            const matching = workouts.filter(w => w.exercise.toLowerCase() === exName.toLowerCase());
             
             if (matching.length > 0) {
                 const newest = matching.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
@@ -217,6 +403,41 @@
                     document.getElementById('reps').value = newest.reps;
                 }
             }
+        }
+
+        // Update star favorite button state next to exercise input
+        function updateStarButton() {
+            const val = exerciseInput.value.trim();
+            if (!val) {
+                starBtn.classList.remove('active');
+                starBtn.textContent = '☆';
+                return;
+            }
+            const meta = getMeta(val);
+            if (meta.favorite) {
+                starBtn.classList.add('active');
+                starBtn.textContent = '★';
+            } else {
+                starBtn.classList.remove('active');
+                starBtn.textContent = '☆';
+            }
+        }
+
+        function toggleFavoriteFromForm() {
+            const val = exerciseInput.value.trim();
+            if (!val) return;
+            
+            const meta = getMeta(val);
+            meta.favorite = !meta.favorite;
+            saveMeta();
+            updateStarButton();
+            updateFavoritesList();
+        }
+
+        exerciseInput.addEventListener('input', () => {
+            const val = exerciseInput.value.trim();
+            if (val) autofillExerciseData(val);
+            updateStarButton();
         });
 
         // Handle form submission
@@ -228,7 +449,11 @@
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
 
-            // Save new workout with a unique ID
+            // Ensure exercise meta exists
+            getMeta(exercise);
+            saveMeta();
+
+            // Save new workout
             const newEntry = { id: Date.now(), date, exercise, weight, sets, reps };
             workouts.push(newEntry);
             localStorage.setItem('workouts', JSON.stringify(workouts));
@@ -236,6 +461,7 @@
             updateUI();
             form.reset();
             document.getElementById('date').valueAsDate = new Date();
+            updateStarButton();
         });
 
         filter.addEventListener('change', updateChart);
@@ -248,9 +474,37 @@
             }
         }
 
+        function selectFavorite(exName) {
+            exerciseInput.value = exName;
+            autofillExerciseData(exName);
+            updateStarButton();
+        }
+
+        function updateFavoritesList() {
+            const container = document.getElementById('favorites-list');
+            container.innerHTML = '';
+            
+            const favExercises = Object.keys(exerciseMeta).filter(k => exerciseMeta[k].favorite);
+            
+            if (favExercises.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; font-size: 0.9em; margin: 0;">No favorites added yet. Click the star ★ next to an exercise to favorite it!</p>';
+                return;
+            }
+
+            favExercises.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).forEach(ex => {
+                const btn = document.createElement('button');
+                btn.className = 'fav-btn';
+                btn.type = 'button';
+                btn.innerHTML = `<span>★</span> ${ex}`;
+                btn.onclick = () => selectFavorite(ex);
+                container.appendChild(btn);
+            });
+        }
+
         function updateUI() {
             updateTable();
             updateExerciseLists();
+            updateFavoritesList();
             updateChart();
         }
 
@@ -277,8 +531,10 @@
         }
 
         function updateExerciseLists() {
-            const exercises = [...new Set(workouts.map(w => w.exercise))]
-                .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            const exercises = [...new Set([
+                ...workouts.map(w => w.exercise),
+                ...Object.keys(exerciseMeta)
+            ])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
             
             const currentSelection = filter.value;
             filter.innerHTML = '<option value="">-- Select Exercise --</option>';
@@ -362,7 +618,128 @@
             });
         }
 
-        // Initialize the app on load
+        /* --- Settings Modal Logic --- */
+        function openSettings() {
+            renderSettingsList();
+            document.getElementById('settings-modal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        function renderSettingsList() {
+            const container = document.getElementById('settings-exercise-list');
+            container.innerHTML = '';
+
+            const allExercises = [...new Set([
+                ...workouts.map(w => w.exercise),
+                ...Object.keys(exerciseMeta)
+            ])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+            if (allExercises.length === 0) {
+                container.innerHTML = '<p style="color: #64748b;">No exercises logged yet.</p>';
+                return;
+            }
+
+            allExercises.forEach(ex => {
+                const meta = getMeta(ex);
+                const item = document.createElement('div');
+                item.className = 'setting-item';
+
+                // Top Row: Edit Name & Favorite Toggle
+                const topRow = document.createElement('div');
+                topRow.className = 'setting-row';
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = ex;
+                nameInput.style.flex = '1';
+
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = 'Save';
+                saveBtn.style.width = 'auto';
+                saveBtn.style.padding = '10px 14px';
+                saveBtn.style.marginTop = '0';
+                saveBtn.onclick = () => {
+                    const newName = nameInput.value.trim();
+                    if (newName && newName !== ex) {
+                        renameExercise(ex, newName);
+                    }
+                };
+
+                const favBtn = document.createElement('button');
+                favBtn.className = 'star-btn' + (meta.favorite ? ' active' : '');
+                favBtn.textContent = meta.favorite ? '★' : '☆';
+                favBtn.type = 'button';
+                favBtn.onclick = () => {
+                    meta.favorite = !meta.favorite;
+                    saveMeta();
+                    renderSettingsList();
+                    updateFavoritesList();
+                    updateStarButton();
+                };
+
+                topRow.appendChild(nameInput);
+                topRow.appendChild(saveBtn);
+                topRow.appendChild(favBtn);
+
+                // Category Chips Selector
+                const catLabel = document.createElement('label');
+                catLabel.textContent = 'Categories:';
+
+                const chipsDiv = document.createElement('div');
+                chipsDiv.className = 'category-chips';
+
+                CATEGORIES.forEach(cat => {
+                    const chip = document.createElement('div');
+                    const isSelected = meta.categories.includes(cat);
+                    chip.className = 'category-chip' + (isSelected ? ' selected' : '');
+                    chip.textContent = cat;
+                    chip.onclick = () => {
+                        if (isSelected) {
+                            meta.categories = meta.categories.filter(c => c !== cat);
+                        } else {
+                            meta.categories.push(cat);
+                        }
+                        saveMeta();
+                        renderSettingsList();
+                    };
+                    chipsDiv.appendChild(chip);
+                });
+
+                item.appendChild(topRow);
+                item.appendChild(catLabel);
+                item.appendChild(chipsDiv);
+
+                container.appendChild(item);
+            });
+        }
+
+        function renameExercise(oldName, newName) {
+            // Update all workout records
+            workouts.forEach(w => {
+                if (w.exercise.toLowerCase() === oldName.toLowerCase()) {
+                    w.exercise = newName;
+                }
+            });
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+
+            // Transfer metadata
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === oldName.toLowerCase());
+            if (key) {
+                exerciseMeta[newName] = exerciseMeta[key];
+                if (key !== newName) delete exerciseMeta[key];
+            } else {
+                exerciseMeta[newName] = { favorite: false, categories: [] };
+            }
+            saveMeta();
+
+            updateUI();
+            renderSettingsList();
+        }
+
+        // Initialize app on page load
         updateUI();
     </script>
 </body>
