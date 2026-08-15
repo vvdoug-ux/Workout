@@ -1,1144 +1,1077 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Tracker SPA</title>
-  <!-- Chart.js Library for Volume Tracking -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* ==========================================================================
-       1. CSS VARIABLES & THEMING
-       ========================================================================== */
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --input-bg: #0f172a;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-primary: #3b82f6;
-      --accent-hover: #2563eb;
-      --accent-soft: rgba(59, 130, 246, 0.15);
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --badge-bg: #334155;
-      --badge-tag-bg: #1e3a8a;
-      --badge-tag-text: #93c5fd;
-      --radius: 10px;
-      --transition: all 0.2s ease-in-out;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Workout Tracker</title>
+    <!-- We load Chart.js to handle the visual progress graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f4f4f9; 
+            color: #333; 
+        }
+        
+        /* Top Navigation Header */
+        .top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 20px;
+            height: 42px; /* Fixed height for header buttons */
+        }
+        
+        .tab-btn {
+            flex: 1;
+            height: 100%;
+            padding: 0 6px;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .tab-btn:hover { background: #cbd5e1; }
+        .tab-btn.active { background: #2563eb; color: white; }
 
-    /* ==========================================================================
-       2. BASE & RESET STYLES
-       ========================================================================== */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+        /* Square Settings Wheel Button */
+        .settings-tab-btn {
+            flex: none;
+            width: 42px; /* Same width as height */
+            font-size: 1.1em;
+            padding: 0;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 20px 12px;
-    }
+        /* Section Visibility */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-    .app-wrapper {
-      width: 100%;
-      max-width: 720px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin-bottom: 20px; 
+        }
+        h2, h3 { margin-top: 0; color: #1a1a1a; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        
+        input, select, button { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        button { 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            transition: background 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      padding: 16px 20px;
-      border-radius: var(--radius);
-    }
+        /* Tag Pill Badges */
+        .tag-pill {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-right: 4px;
+            border: 1px solid #bae6fd;
+        }
 
-    header h1 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
+        /* Favorite Star Button */
+        .star-btn {
+            background: transparent;
+            color: #cbd5e1; /* Light gray star by default */
+            border: none;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0;
+            width: auto;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .star-btn:hover {
+            color: #94a3b8;
+        }
+        .star-btn.active {
+            background: transparent;
+            color: #eab308; /* Yellow star when active */
+        }
+        .star-btn.active:hover {
+            color: #ca8a04;
+        }
 
-    .pst-clock {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      background: var(--input-bg);
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--card-border);
-    }
+        /* Favorites Quick Selection Section */
+        .favorites-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .fav-btn {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            width: auto;
+            margin-top: 0;
+        }
+        .fav-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+        
+        /* Faded state for exercises already logged today */
+        .fav-btn.logged {
+            opacity: 0.45;
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
 
-    /* ==========================================================================
-       3. NAVIGATION TABS
-       ========================================================================== */
-    .nav-tabs {
-      display: flex;
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 6px;
-      gap: 6px;
-    }
+        /* Settings Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            max-width: 550px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .modal-header h2 { margin: 0; }
+        .close-modal-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+            width: auto;
+            margin: 0;
+            padding: 0 5px;
+        }
 
-    .tab-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      padding: 12px 6px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: var(--transition);
-    }
+        /* Add Exercise Container in Settings */
+        .add-exercise-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
 
-    .tab-btn:hover {
-      color: var(--text-main);
-      background-color: rgba(255, 255, 255, 0.05);
-    }
+        .setting-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        .setting-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .category-chip {
+            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            user-select: none;
+            color: #475569;
+        }
+        .category-chip.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
 
-    .tab-btn.active {
-      background-color: var(--accent-primary);
-      color: #ffffff;
-    }
-
-    /* ==========================================================================
-       4. CARDS & TAB PANELS
-       ========================================================================== */
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 24px;
-    }
-
-    .tab-panel {
-      display: none;
-    }
-
-    .tab-panel.active {
-      display: block;
-    }
-
-    .panel-header {
-      margin-bottom: 20px;
-    }
-
-    .panel-header h2 {
-      font-size: 1.2rem;
-      color: var(--text-main);
-    }
-
-    .panel-header p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* ==========================================================================
-       5. FORMS & INPUT CONTROLS
-       ========================================================================== */
-    .form-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-    }
-
-    label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
-      background-color: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      color: var(--text-main);
-      padding: 12px 14px;
-      font-size: 0.95rem;
-      width: 100%;
-      transition: var(--transition);
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-
-    /* Tag Checkboxes */
-    .tag-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .tag-checkbox {
-      display: none;
-    }
-
-    .tag-label {
-      display: inline-flex;
-      align-items: center;
-      padding: 8px 14px;
-      background-color: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      user-select: none;
-      transition: var(--transition);
-    }
-
-    .tag-checkbox:checked + .tag-label {
-      background-color: var(--accent-soft);
-      border-color: var(--accent-primary);
-      color: var(--accent-primary);
-      font-weight: 600;
-    }
-
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 18px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: var(--transition);
-    }
-
-    .btn-primary {
-      background-color: var(--accent-primary);
-      color: white;
-      width: 100%;
-      margin-top: 8px;
-    }
-
-    .btn-primary:hover {
-      background-color: var(--accent-hover);
-    }
-
-    .btn-secondary {
-      background-color: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-    }
-
-    .btn-secondary:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-
-    .btn-danger {
-      background-color: transparent;
-      border: 1px solid var(--danger);
-      color: var(--danger);
-      padding: 6px 10px;
-      font-size: 0.8rem;
-    }
-
-    .btn-danger:hover {
-      background-color: var(--danger);
-      color: white;
-    }
-
-    /* ==========================================================================
-       6. BADGES, LISTS, & HISTORY ITEMS
-       ========================================================================== */
-    .badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      background: var(--badge-bg);
-      color: var(--text-main);
-      padding: 3px 8px;
-      border-radius: 6px;
-      margin-right: 4px;
-      margin-top: 4px;
-    }
-
-    .badge-tag {
-      background: var(--badge-tag-bg);
-      color: var(--badge-tag-text);
-    }
-
-    .search-bar {
-      margin-bottom: 16px;
-    }
-
-    .log-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .log-item {
-      background-color: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 14px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .log-details h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .log-meta {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 6px;
-    }
-
-    .log-timestamp {
-      font-size: 0.75rem;
-      color: #64748b;
-      margin-top: 6px;
-    }
-
-    .log-actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    .exercise-mgr-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 14px;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-
-    .fav-toggle {
-      background: none;
-      border: none;
-      font-size: 1.3rem;
-      cursor: pointer;
-      color: #64748b;
-      padding: 0 4px;
-    }
-
-    .fav-toggle.active {
-      color: #f59e0b;
-    }
-
-    /* ==========================================================================
-       7. CHART CONTAINER
-       ========================================================================== */
-    .chart-box {
-      position: relative;
-      width: 100%;
-      height: 320px;
-      margin-top: 16px;
-    }
-
-    /* ==========================================================================
-       8. MODAL WINDOWS
-       ========================================================================== */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.75);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 1000;
-    }
-
-    .modal-content {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 24px;
-      width: 100%;
-      max-width: 500px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-  </style>
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-top: 0;
+            width: auto;
+            font-weight: bold;
+        }
+        .delete-btn:hover { background: #dc2626; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        canvas { max-width: 100%; margin-top: 20px; }
+    </style>
 </head>
 <body>
 
-<div class="app-wrapper">
-  <!-- Top App Header -->
-  <header>
-    <h1>Workout Tracker</h1>
-    <div id="pst-clock" class="pst-clock">--:-- -- PST</div>
-  </header>
-
-  <!-- Navigation Bar -->
-  <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('log-panel')">Log</button>
-    <button class="tab-btn" onclick="switchTab('charts-panel')">Progress</button>
-    <button class="tab-btn" onclick="switchTab('history-panel')">History</button>
-    <button class="tab-btn" onclick="switchTab('settings-panel')">Manage</button>
-  </nav>
-
-  <!-- TAB 1: WORKOUT LOGGING PANEL -->
-  <div id="log-panel" class="tab-panel card active">
-    <div class="panel-header">
-      <h2>Log Exercise</h2>
-      <p>Record your workout details, sets, reps, and targets.</p>
+    <!-- Top Navigation Header -->
+    <div class="top-header">
+        <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
+        <button class="tab-btn" onclick="switchTab('tracker')">Progress</button>
+        <button class="tab-btn" onclick="switchTab('history')">History</button>
+        <button class="tab-btn settings-tab-btn" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
 
-    <form id="workout-form" class="form-grid">
-      <!-- Preset Selection -->
-      <div class="form-group">
-        <label for="exercise-preset">Preset Exercises</label>
-        <select id="exercise-preset">
-          <option value="">-- Choose Existing or Type Below --</option>
-        </select>
-      </div>
+    <!-- Log Exercise Section -->
+    <div id="section-log" class="tab-content active">
+        <div class="card">
+            <h2>Log Exercise</h2>
+            <form id="workout-form">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Exercise Name</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" onfocus="this.select()" required>
+                        <button type="button" id="star-btn" class="star-btn" onclick="toggleFavoriteFromForm()" title="Favorite Exercise">★</button>
+                    </div>
+                    <datalist id="exercise-history"></datalist>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Weight</label>
+                        <input type="number" id="weight" step="0.5" onfocus="this.select()" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Sets</label>
+                        <input type="number" id="sets" onfocus="this.select()" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Reps</label>
+                        <input type="number" id="reps" onfocus="this.select()" required>
+                    </div>
+                </div>
 
-      <!-- Exercise Name -->
-      <div class="form-group">
-        <label for="exercise-name">Exercise Name</label>
-        <input type="text" id="exercise-name" placeholder="e.g. Bench Press, Pull Up" required>
-      </div>
+                <!-- Added Tags Input Field -->
+                <div class="form-group">
+                    <label>Tags (optional, comma-separated)</label>
+                    <input type="text" id="tags" placeholder="e.g. warmup, PR, dropset">
+                </div>
 
-      <!-- Tags Checklist -->
-      <div class="form-group">
-        <label>Tags</label>
-        <div class="tag-group">
-          <input type="checkbox" id="tag-bw" class="tag-checkbox" value="Bodyweight">
-          <label for="tag-bw" class="tag-label">Bodyweight</label>
-
-          <input type="checkbox" id="tag-push" class="tag-checkbox" value="Push">
-          <label for="tag-push" class="tag-label">Push</label>
-
-          <input type="checkbox" id="tag-pull" class="tag-checkbox" value="Pull">
-          <label for="tag-pull" class="tag-label">Pull</label>
+                <button type="submit">Save</button>
+            </form>
         </div>
-      </div>
 
-      <!-- Tier 1: Muscle Group -->
-      <div class="form-group">
-        <label for="group-select">Groups</label>
-        <select id="group-select" required>
-          <option value="">-- Select Group --</option>
-          <option value="Arms">Arms</option>
-          <option value="Legs">Legs</option>
-          <option value="Upper Back">Upper Back</option>
-          <option value="Chest">Chest</option>
-          <option value="Shoulders">Shoulders</option>
-          <option value="Core">Core</option>
-        </select>
-      </div>
-
-      <!-- Tier 2: Dynamic Subcategory -->
-      <div id="sub-group-container" class="form-group hidden">
-        <label id="sub-group-label" for="sub-group-select">Subcategory</label>
-        <select id="sub-group-select">
-          <option value="">-- Select Option --</option>
-        </select>
-      </div>
-
-      <!-- Tier 3: Dynamic Sub-Subcategory -->
-      <div id="sub-sub-group-container" class="form-group hidden">
-        <label id="sub-sub-group-label" for="sub-sub-group-select">Sub-Subcategory</label>
-        <select id="sub-sub-group-select">
-          <option value="">-- Select Option --</option>
-        </select>
-      </div>
-
-      <!-- Weight, Sets, Reps Inputs -->
-      <div class="form-row">
-        <div class="form-group">
-          <label for="weight">Weight (lbs)</label>
-          <input type="number" id="weight" min="0" step="0.5" placeholder="0">
+        <!-- Favorites Quick Select Card -->
+        <div class="card">
+            <h2>Favorites</h2>
+            <div id="favorites-list"></div>
         </div>
-        <div class="form-group">
-          <label for="sets">Sets</label>
-          <input type="number" id="sets" min="1" placeholder="3" required>
+    </div>
+
+    <!-- Chart Visualization Tab -->
+    <div id="section-tracker" class="card tab-content">
+        <h2>Progress Tracker</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+            <div style="flex: 1; min-width: 160px;">
+                <label for="chart-filter">Exercise</label>
+                <select id="chart-filter">
+                    <option value="">-- No Data Yet --</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <label for="chart-timeframe">Timeframe</label>
+                <select id="chart-timeframe">
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year" selected>Year</option>
+                    <option value="max">Max</option>
+                </select>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="reps">Reps</label>
-          <input type="number" id="reps" min="1" placeholder="10" required>
+        <canvas id="progressChart"></canvas>
+    </div>
+
+    <!-- History Table Tab -->
+    <div id="section-history" class="card tab-content">
+        <h2>History</h2>
+        <table id="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Exercise</th>
+                    <th>Weight</th>
+                    <th>Sets</th>
+                    <th>Reps</th>
+                    <th>Tags</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Exercise Settings</h2>
+                <button class="close-modal-btn" onclick="closeSettings()">&times;</button>
+            </div>
+
+            <!-- Add New Exercise Input Form -->
+            <div class="add-exercise-box">
+                <label style="font-weight: bold; font-size: 0.9em; margin-bottom: 6px; display: block;">Add New Exercise</label>
+                <form id="add-exercise-form" onsubmit="addNewExerciseFromSettings(event)" style="display: flex; gap: 8px;">
+                    <input type="text" id="new-exercise-input" placeholder="Enter exercise name..." style="flex: 1;" required>
+                    <button type="submit" style="width: auto; margin-top: 0; padding: 0 16px; font-size: 0.9em; white-space: nowrap;">+ Add</button>
+                </form>
+            </div>
+
+            <div id="settings-exercise-list"></div>
         </div>
-      </div>
-
-      <button type="submit" class="btn btn-primary">Save Workout Log</button>
-    </form>
-  </div>
-
-  <!-- TAB 2: PROGRESS CHARTS PANEL -->
-  <div id="charts-panel" class="tab-panel card">
-    <div class="panel-header">
-      <h2>Volume Progression</h2>
-      <p>Track cumulative weight or repetition volume over time.</p>
     </div>
 
-    <div class="form-group">
-      <label for="chart-filter">Filter by Exercise</label>
-      <select id="chart-filter">
-        <option value="ALL">All Exercises (Total Volume)</option>
-      </select>
-    </div>
-
-    <div class="chart-box">
-      <canvas id="volumeChart"></canvas>
-    </div>
-  </div>
-
-  <!-- TAB 3: WORKOUT HISTORY PANEL -->
-  <div id="history-panel" class="tab-panel card">
-    <div class="panel-header">
-      <h2>Workout History</h2>
-      <p>Review logged entries (Timestamps in Pacific Standard Time).</p>
-    </div>
-
-    <div class="search-bar">
-      <input type="text" id="history-search" placeholder="Search logs by exercise, tag, or muscle group..." oninput="renderHistory()">
-    </div>
-
-    <div id="log-list-container" class="log-list">
-      <!-- Dynamic Logs Rendered Here -->
-    </div>
-  </div>
-
-  <!-- TAB 4: MANAGEMENT & SETTINGS PANEL -->
-  <div id="settings-panel" class="tab-panel card">
-    <div class="panel-header">
-      <h2>Exercise Management & Data</h2>
-      <p>Configure exercise presets, toggle favorites, or back up data.</p>
-    </div>
-
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label>Stored Presets</label>
-      <div id="exercise-manager-list">
-        <!-- Dynamic Preset List -->
-      </div>
-    </div>
-
-    <div class="panel-header" style="margin-top: 30px;">
-      <h2>Data Backup & Restore</h2>
-    </div>
-
-    <div class="form-row">
-      <button class="btn btn-secondary" onclick="exportDataJSON()">Export JSON</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">Import JSON</button>
-      <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importDataJSON(event)">
-    </div>
-
-    <button class="btn btn-danger" style="margin-top: 16px; width: 100%;" onclick="clearAllData()">Clear All Application Data</button>
-  </div>
-</div>
-
-<!-- EDIT LOG MODAL OVERLAY -->
-<div id="edit-modal" class="modal-overlay hidden">
-  <div class="modal-content">
-    <h2>Edit Workout Log</h2>
-    <input type="hidden" id="edit-log-id">
-    
-    <div class="form-group">
-      <label for="edit-exercise-name">Exercise</label>
-      <input type="text" id="edit-exercise-name" required>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label for="edit-weight">Weight (lbs)</label>
-        <input type="number" id="edit-weight" min="0" step="0.5">
-      </div>
-      <div class="form-group">
-        <label for="edit-sets">Sets</label>
-        <input type="number" id="edit-sets" min="1" required>
-      </div>
-      <div class="form-group">
-        <label for="edit-reps">Reps</label>
-        <input type="number" id="edit-reps" min="1" required>
-      </div>
-    </div>
-
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <button class="btn btn-primary" style="flex: 1;" onclick="saveEditLog()">Save Changes</button>
-      <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  /* ==========================================================================
-     1. TAXONOMY CONFIGURATION (MULTI-TIER NESTED STRUCTURE)
-     ========================================================================== */
-  const taxonomyData = {
-    "Arms": {
-      label: "Arm Muscles",
-      options: ["Biceps", "Triceps", "Brachialis", "Forearms"]
-    },
-    "Legs": {
-      label: "Leg Muscles",
-      options: ["Quads", "Hamstrings", "Adductors", "Gluteus Maximus", "Calves"]
-    },
-    "Upper Back": {
-      label: "Upper Back Muscles",
-      options: ["Lats", "Traps", "Rhomboids"]
-    },
-    "Chest": {
-      label: "Chest Muscles",
-      options: {
-        "Pectoralis Major": {
-          label: "Pectoralis Major Sections",
-          options: ["Upper", "Middle", "Lower"]
-        },
-        "Pectoralis Minor": null,
-        "Serratus Anterior": null
-      }
-    },
-    "Shoulders": {
-      label: "Shoulder Muscles",
-      options: ["Anterior Deltoid (front)", "Lateral Deltoid (side)", "Posterior Deltoid (rear)"]
-    },
-    "Core": {
-      label: "Core Muscles",
-      options: {
-        "Lower Back": {
-          label: "Lower Back Muscles",
-          options: ["Erector Spinae", "Multifidus", "Quadratus Lumborum"]
-        },
-        "Glutes": {
-          label: "Glute Muscles",
-          options: ["Gluteus Medius", "Gluteus Minimus"]
-        },
-        "Abs": {
-          label: "Ab Muscles",
-          options: ["Rectus Abdominus", "Transversus Abdominus", "Internal Obliques", "External Obliques"]
+    <script>
+        // Helper function to get current date in Pacific Time (America/Los_Angeles)
+        function getPacificDateString() {
+            return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
-      }
-    }
-  };
 
-  /* ==========================================================================
-     2. GLOBAL STATE & LOCAL STORAGE INITIALIZATION
-     ========================================================================== */
-  let logs = JSON.parse(localStorage.getItem('workout_logs') || '[]');
-  let exercises = JSON.parse(localStorage.getItem('workout_exercises') || '[]');
-  let chartInstance = null;
-
-  // Initialize Default Presets if Empty
-  if (exercises.length === 0) {
-    exercises = [
-      { name: "Bench Press", group: "Chest", sub: "Pectoralis Major", subSub: "Middle", tags: ["Push"], favorite: true },
-      { name: "Pull Up", group: "Upper Back", sub: "Lats", subSub: null, tags: ["Bodyweight", "Pull"], favorite: true },
-      { name: "Squat", group: "Legs", sub: "Quads", subSub: null, tags: ["Push"], favorite: false }
-    ];
-    localStorage.setItem('workout_exercises', JSON.stringify(exercises));
-  }
-
-  /* ==========================================================================
-     3. DOM ELEMENTS
-     ========================================================================== */
-  const groupSelect = document.getElementById('group-select');
-  const subContainer = document.getElementById('sub-group-container');
-  const subLabel = document.getElementById('sub-group-label');
-  const subSelect = document.getElementById('sub-group-select');
-
-  const subSubContainer = document.getElementById('sub-sub-group-container');
-  const subSubLabel = document.getElementById('sub-sub-group-label');
-  const subSubSelect = document.getElementById('sub-sub-group-select');
-
-  const exercisePresetSelect = document.getElementById('exercise-preset');
-  const exerciseNameInput = document.getElementById('exercise-name');
-  const workoutForm = document.getElementById('workout-form');
-
-  /* ==========================================================================
-     4. PST CLOCK & TIME FUNCTIONS
-     ========================================================================== */
-  function updatePSTClock() {
-    const now = new Date();
-    const formatted = now.toLocaleTimeString('en-US', {
-      timeZone: 'America/Los_Angeles',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    document.getElementById('pst-clock').textContent = `${formatted} PST`;
-  }
-  setInterval(updatePSTClock, 1000);
-  updatePSTClock();
-
-  function formatPSTDate(isoString) {
-    return new Date(isoString).toLocaleString('en-US', {
-      timeZone: 'America/Los_Angeles',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    });
-  }
-
-  /* ==========================================================================
-     5. NAVIGATION & TAB SWITCHING
-     ========================================================================== */
-  function switchTab(panelId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-
-    const btnMatch = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(panelId));
-    if (btnMatch) btnMatch.classList.add('active');
-
-    document.getElementById(panelId).classList.add('active');
-
-    if (panelId === 'charts-panel') updateChart();
-    if (panelId === 'history-panel') renderHistory();
-    if (panelId === 'settings-panel') renderExerciseManager();
-  }
-
-  /* ==========================================================================
-     6. DYNAMIC TAXONOMY DROPDOWNS
-     ========================================================================== */
-  groupSelect.addEventListener('change', (e) => {
-    const selectedGroup = e.target.value;
-
-    subSelect.innerHTML = '<option value="">-- Select Option --</option>';
-    subSubSelect.innerHTML = '<option value="">-- Select Option --</option>';
-    subSubContainer.classList.add('hidden');
-
-    if (!selectedGroup || !taxonomyData[selectedGroup]) {
-      subContainer.classList.add('hidden');
-      return;
-    }
-
-    const groupConfig = taxonomyData[selectedGroup];
-    subLabel.textContent = groupConfig.label;
-
-    const items = Array.isArray(groupConfig.options)
-      ? groupConfig.options
-      : Object.keys(groupConfig.options);
-
-    items.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item;
-      opt.textContent = item;
-      subSelect.appendChild(opt);
-    });
-
-    subContainer.classList.remove('hidden');
-  });
-
-  subSelect.addEventListener('change', (e) => {
-    const selectedGroup = groupSelect.value;
-    const selectedSub = e.target.value;
-
-    subSubSelect.innerHTML = '<option value="">-- Select Option --</option>';
-
-    if (!selectedGroup || !selectedSub || !taxonomyData[selectedGroup]) {
-      subSubContainer.classList.add('hidden');
-      return;
-    }
-
-    const groupConfig = taxonomyData[selectedGroup];
-
-    if (groupConfig.options && !Array.isArray(groupConfig.options) && groupConfig.options[selectedSub]) {
-      const subConfig = groupConfig.options[selectedSub];
-      subSubLabel.textContent = subConfig.label;
-
-      subConfig.options.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item;
-        opt.textContent = item;
-        subSubSelect.appendChild(opt);
-      });
-
-      subSubContainer.classList.remove('hidden');
-    } else {
-      subSubContainer.classList.add('hidden');
-    }
-  });
-
-  /* ==========================================================================
-     7. PRESET SELECTION & AUTOFILL
-     ========================================================================== */
-  function populateExerciseDropdown() {
-    exercisePresetSelect.innerHTML = '<option value="">-- Choose Existing or Type Below --</option>';
-
-    const sorted = [...exercises].sort((a, b) => b.favorite - a.favorite);
-
-    sorted.forEach(ex => {
-      const opt = document.createElement('option');
-      opt.value = ex.name;
-      opt.textContent = `${ex.favorite ? '★ ' : ''}${ex.name}`;
-      exercisePresetSelect.appendChild(opt);
-    });
-  }
-
-  exercisePresetSelect.addEventListener('change', (e) => {
-    const found = exercises.find(ex => ex.name === e.target.value);
-    if (found) {
-      exerciseNameInput.value = found.name;
-
-      document.querySelectorAll('.tag-checkbox').forEach(cb => {
-        cb.checked = found.tags ? found.tags.includes(cb.value) : false;
-      });
-
-      if (found.group) {
-        groupSelect.value = found.group;
-        groupSelect.dispatchEvent(new Event('change'));
-
-        if (found.sub) {
-          subSelect.value = found.sub;
-          subSelect.dispatchEvent(new Event('change'));
-
-          if (found.subSub) {
-            subSubSelect.value = found.subSub;
-          }
+        // Helper function to calculate start date threshold based on timeframe option
+        function getCutoffDateString(timeframe) {
+            if (timeframe === 'max') return null;
+            
+            const d = new Date();
+            if (timeframe === 'week') {
+                d.setDate(d.getDate() - 7);
+            } else if (timeframe === 'month') {
+                d.setMonth(d.getMonth() - 1);
+            } else if (timeframe === 'year') {
+                d.setFullYear(d.getFullYear() - 1);
+            }
+            return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
-      }
 
-      const lastLog = logs.find(l => l.exercise.toLowerCase() === found.name.toLowerCase());
-      if (lastLog) {
-        document.getElementById('weight').value = lastLog.weight;
-        document.getElementById('sets').value = lastLog.sets;
-        document.getElementById('reps').value = lastLog.reps;
-      }
-    }
-  });
+        // All selectable categories sorted alphabetically
+        const CATEGORIES = ["Bodyweight", "Cardio", "Core", "Full Body", "Lower Body", "Upper Body"];
 
-  /* ==========================================================================
-     8. LOG FORM SUBMISSION
-     ========================================================================== */
-  workoutForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+        // Categories used specifically for grouping section headers in the Favorites view (Bodyweight excluded)
+        const FAVORITE_CATEGORIES = ["Cardio", "Core", "Full Body", "Lower Body", "Upper Body"];
 
-    const name = exerciseNameInput.value.trim();
-    const tags = Array.from(document.querySelectorAll('.tag-checkbox:checked')).map(cb => cb.value);
-    const group = groupSelect.value;
-    const sub = subSelect.value || null;
-    const subSub = subSubSelect.value || null;
-    const weight = parseFloat(document.getElementById('weight').value) || 0;
-    const sets = parseInt(document.getElementById('sets').value);
-    const reps = parseInt(document.getElementById('reps').value);
+        // Subcategories organized by Category and sorted alphabetically
+        const SUBCATEGORIES = {
+            "Bodyweight": [],
+            "Cardio": [],
+            "Core": ["Abs", "Lower Back", "Obliques"],
+            "Full Body": [],
+            "Lower Body": ["Ad/Abductors", "Calves", "Glutes", "Hamstrings", "Quads"],
+            "Upper Body": ["Back", "Biceps", "Chest", "Forearms", "Shoulders", "Triceps"]
+        };
 
-    let exObj = exercises.find(ex => ex.name.toLowerCase() === name.toLowerCase());
-    if (!exObj) {
-      exObj = { name, group, sub, subSub, tags, favorite: false };
-      exercises.push(exObj);
-    } else {
-      exObj.group = group;
-      exObj.sub = sub;
-      exObj.subSub = subSub;
-      exObj.tags = tags;
-    }
-    localStorage.setItem('workout_exercises', JSON.stringify(exercises));
-
-    const newLog = {
-      id: Date.now(),
-      exercise: name,
-      tags,
-      group,
-      sub,
-      subSub,
-      weight,
-      sets,
-      reps,
-      volume: weight * sets * reps,
-      timestamp: new Date().toISOString()
-    };
-
-    logs.unshift(newLog);
-    localStorage.setItem('workout_logs', JSON.stringify(logs));
-
-    workoutForm.reset();
-    subContainer.classList.add('hidden');
-    subSubContainer.classList.add('hidden');
-    populateExerciseDropdown();
-    alert('Workout Logged Successfully!');
-  });
-
-  /* ==========================================================================
-     9. HISTORY RENDER & EDIT/DELETE LOGS
-     ========================================================================== */
-  function renderHistory() {
-    const container = document.getElementById('log-list-container');
-    const query = document.getElementById('history-search').value.toLowerCase().trim();
-
-    const filtered = logs.filter(log => {
-      const matchName = log.exercise.toLowerCase().includes(query);
-      const matchGroup = log.group ? log.group.toLowerCase().includes(query) : false;
-      const matchTags = log.tags ? log.tags.some(t => t.toLowerCase().includes(query)) : false;
-      return matchName || matchGroup || matchTags;
-    });
-
-    if (filtered.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No matching logs found.</p>';
-      return;
-    }
-
-    container.innerHTML = filtered.map(log => `
-      <div class="log-item">
-        <div class="log-details">
-          <h3>${log.exercise}</h3>
-          <div>
-            <span class="badge">${log.group}</span>
-            ${log.sub ? `<span class="badge">${log.sub}</span>` : ''}
-            ${log.subSub ? `<span class="badge">${log.subSub}</span>` : ''}
-            ${log.tags ? log.tags.map(t => `<span class="badge badge-tag">${t}</span>`).join('') : ''}
-          </div>
-          <div class="log-meta">
-            ${log.weight > 0 ? log.weight + ' lbs | ' : ''}${log.sets} sets × ${log.reps} reps 
-            (${log.volume > 0 ? log.volume + ' lbs total' : 'Bodyweight'})
-          </div>
-          <div class="log-timestamp">${formatPSTDate(log.timestamp)} PST</div>
-        </div>
-        <div class="log-actions">
-          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openEditModal(${log.id})">Edit</button>
-          <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function deleteLog(id) {
-    if (confirm('Delete this workout entry?')) {
-      logs = logs.filter(l => l.id !== id);
-      localStorage.setItem('workout_logs', JSON.stringify(logs));
-      renderHistory();
-    }
-  }
-
-  function openEditModal(id) {
-    const log = logs.find(l => l.id === id);
-    if (!log) return;
-
-    document.getElementById('edit-log-id').value = log.id;
-    document.getElementById('edit-exercise-name').value = log.exercise;
-    document.getElementById('edit-weight').value = log.weight;
-    document.getElementById('edit-sets').value = log.sets;
-    document.getElementById('edit-reps').value = log.reps;
-
-    document.getElementById('edit-modal').classList.remove('hidden');
-  }
-
-  function closeEditModal() {
-    document.getElementById('edit-modal').classList.add('hidden');
-  }
-
-  function saveEditLog() {
-    const id = parseInt(document.getElementById('edit-log-id').value);
-    const log = logs.find(l => l.id === id);
-    if (!log) return;
-
-    log.exercise = document.getElementById('edit-exercise-name').value.trim();
-    log.weight = parseFloat(document.getElementById('edit-weight').value) || 0;
-    log.sets = parseInt(document.getElementById('edit-sets').value);
-    log.reps = parseInt(document.getElementById('edit-reps').value);
-    log.volume = log.weight * log.sets * log.reps;
-
-    localStorage.setItem('workout_logs', JSON.stringify(logs));
-    closeEditModal();
-    renderHistory();
-  }
-
-  /* ==========================================================================
-     10. EXERCISE MANAGER
-     ========================================================================== */
-  function renderExerciseManager() {
-    const container = document.getElementById('exercise-manager-list');
-    if (exercises.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No exercise presets.</p>';
-      return;
-    }
-
-    container.innerHTML = exercises.map((ex, idx) => `
-      <div class="exercise-mgr-item">
-        <div>
-          <strong>${ex.name}</strong><br>
-          <small style="color: var(--text-muted);">${ex.group} ${ex.sub ? '• ' + ex.sub : ''}</small>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="fav-toggle ${ex.favorite ? 'active' : ''}" onclick="toggleFav(${idx})">★</button>
-          <button class="btn btn-danger" onclick="deletePreset(${idx})">Remove</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function toggleFav(idx) {
-    exercises[idx].favorite = !exercises[idx].favorite;
-    localStorage.setItem('workout_exercises', JSON.stringify(exercises));
-    renderExerciseManager();
-    populateExerciseDropdown();
-  }
-
-  function deletePreset(idx) {
-    if (confirm(`Delete preset for "${exercises[idx].name}"?`)) {
-      exercises.splice(idx, 1);
-      localStorage.setItem('workout_exercises', JSON.stringify(exercises));
-      renderExerciseManager();
-      populateExerciseDropdown();
-    }
-  }
-
-  /* ==========================================================================
-     11. CHART.JS PROGRESS GRAPH
-     ========================================================================== */
-  function updateChart() {
-    const filterSelect = document.getElementById('chart-filter');
-    const currentVal = filterSelect.value;
-
-    filterSelect.innerHTML = '<option value="ALL">All Exercises (Total Volume)</option>';
-    const unique = [...new Set(logs.map(l => l.exercise))];
-    unique.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      filterSelect.appendChild(opt);
-    });
-    filterSelect.value = currentVal;
-
-    const filter = filterSelect.value;
-    const ctx = document.getElementById('volumeChart').getContext('2d');
-
-    const filteredLogs = filter === 'ALL' ? [...logs] : logs.filter(l => l.exercise === filter);
-    const sorted = filteredLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-    const dates = [];
-    const volumes = [];
-
-    sorted.forEach(log => {
-      const d = new Date(log.timestamp).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'numeric', day: 'numeric' });
-      const idx = dates.indexOf(d);
-      const vol = log.volume || (log.sets * log.reps);
-      if (idx > -1) {
-        volumes[idx] += vol;
-      } else {
-        dates.push(d);
-        volumes.push(vol);
-      }
-    });
-
-    if (chartInstance) chartInstance.destroy();
-
-    chartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: dates,
-        datasets: [{
-          label: filter === 'ALL' ? 'Total Volume' : `${filter} Volume`,
-          data: volumes,
-          backgroundColor: '#3b82f6',
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-        },
-        plugins: {
-          legend: { labels: { color: '#f8fafc' } }
+        // Load existing data from browser storage
+        let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+        let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
+        
+        // Auto-migrate legacy "Legs" category names stored in local storage to "Lower Body"
+        let metaUpdated = false;
+        Object.keys(exerciseMeta).forEach(key => {
+            if (exerciseMeta[key].categories) {
+                exerciseMeta[key].categories = exerciseMeta[key].categories.map(c => {
+                    if (c === "Legs") {
+                        metaUpdated = true;
+                        return "Lower Body";
+                    }
+                    return c;
+                });
+            }
+        });
+        if (metaUpdated) {
+            localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
         }
-      }
-    });
-  }
 
-  document.getElementById('chart-filter').addEventListener('change', updateChart);
+        // Ensure every existing item has a unique ID for deletion & sorting
+        workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
+        localStorage.setItem('workouts', JSON.stringify(workouts));
 
-  /* ==========================================================================
-     12. DATA EXPORT & IMPORT
-     ========================================================================== */
-  function exportDataJSON() {
-    const data = { logs, exercises };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `workout_backup_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+        let chartInstance = null;
 
-  function importDataJSON(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+        const form = document.getElementById('workout-form');
+        const filter = document.getElementById('chart-filter');
+        const timeframeFilter = document.getElementById('chart-timeframe');
+        const datalist = document.getElementById('exercise-history');
+        const exerciseInput = document.getElementById('exercise');
+        const weightInput = document.getElementById('weight');
+        const tagsInput = document.getElementById('tags');
+        const starBtn = document.getElementById('star-btn');
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const parsed = JSON.parse(e.target.result);
-        if (parsed.logs && parsed.exercises) {
-          logs = parsed.logs;
-          exercises = parsed.exercises;
-          localStorage.setItem('workout_logs', JSON.stringify(logs));
-          localStorage.setItem('workout_exercises', JSON.stringify(exercises));
-          populateExerciseDropdown();
-          alert('Data imported successfully!');
-        } else {
-          alert('Invalid backup file structure.');
+        // Default date set to Pacific Time
+        document.getElementById('date').value = getPacificDateString();
+
+        // Resets all form fields in the Log Exercise section
+        function resetLogForm() {
+            form.reset();
+            document.getElementById('date').value = getPacificDateString();
+            tagsInput.value = '';
+            updateStarButton();
+            updateWeightFieldState();
         }
-      } catch (err) {
-        alert('Failed to parse JSON file.');
-      }
-    };
-    reader.readAsText(file);
-  }
 
-  function clearAllData() {
-    if (confirm('Are you sure you want to delete ALL logged workouts and presets? This cannot be undone.')) {
-      localStorage.clear();
-      logs = [];
-      exercises = [];
-      location.reload();
-    }
-  }
+        // Read metadata without creating a new entry automatically
+        function getMeta(exName) {
+            if (!exName) return { favorite: false, categories: [], subcategories: [] };
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            if (key) return exerciseMeta[key];
+            return { favorite: false, categories: [], subcategories: [] };
+        }
 
-  // Initial Execution
-  populateExerciseDropdown();
-</script>
+        // Explicitly create/get metadata only when saving
+        function ensureMeta(exName) {
+            if (!exName) return null;
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            if (key) {
+                if (!exerciseMeta[key].subcategories) exerciseMeta[key].subcategories = [];
+                return exerciseMeta[key];
+            }
+            exerciseMeta[exName] = { favorite: false, categories: [], subcategories: [] };
+            saveMeta();
+            return exerciseMeta[exName];
+        }
+
+        function saveMeta() {
+            localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
+        }
+
+        // Switch between tabs
+        function switchTab(tabName) {
+            if (tabName !== 'log') {
+                resetLogForm();
+            }
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.top-header .tab-btn:not(.settings-tab-btn)').forEach(el => el.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.top-header .tab-btn');
+
+            if (tabName === 'log') {
+                document.getElementById('section-log').classList.add('active');
+                buttons[0].classList.add('active');
+            } else if (tabName === 'tracker') {
+                document.getElementById('section-tracker').classList.add('active');
+                buttons[1].classList.add('active');
+                updateChart();
+            } else if (tabName === 'history') {
+                document.getElementById('section-history').classList.add('active');
+                buttons[2].classList.add('active');
+            }
+        }
+
+        // Autofill Weight, Sets, and Reps from the most recent entry
+        function autofillExerciseData(exName) {
+            if (!exName) return;
+            const matching = workouts.filter(w => w.exercise.toLowerCase() === exName.toLowerCase());
+            
+            if (matching.length > 0) {
+                const newest = matching.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+                if (newest) {
+                    weightInput.value = newest.weight;
+                    document.getElementById('sets').value = newest.sets ? newest.sets : '';
+                    document.getElementById('reps').value = newest.reps;
+                }
+            }
+        }
+
+        // Check if current exercise is Bodyweight and toggle Weight field disabled state accordingly
+        function updateWeightFieldState() {
+            const val = exerciseInput.value.trim();
+            const meta = getMeta(val);
+
+            if (val && meta.categories && meta.categories.includes("Bodyweight")) {
+                weightInput.disabled = true;
+                weightInput.value = '0';
+                weightInput.required = false;
+                weightInput.style.backgroundColor = '#e2e8f0';
+                weightInput.style.color = '#94a3b8';
+                weightInput.style.cursor = 'not-allowed';
+            } else {
+                weightInput.disabled = false;
+                weightInput.required = true;
+                weightInput.style.backgroundColor = '';
+                weightInput.style.color = '';
+                weightInput.style.cursor = '';
+            }
+        }
+
+        // Update star favorite button state next to exercise input
+        function updateStarButton() {
+            const val = exerciseInput.value.trim();
+            starBtn.textContent = '★';
+
+            if (!val) {
+                starBtn.classList.remove('active');
+                return;
+            }
+
+            const meta = getMeta(val);
+            if (meta.favorite) {
+                starBtn.classList.add('active');
+            } else {
+                starBtn.classList.remove('active');
+            }
+        }
+
+        function toggleFavoriteFromForm() {
+            const val = exerciseInput.value.trim();
+            if (!val) return;
+            
+            const meta = ensureMeta(val);
+            meta.favorite = !meta.favorite;
+            saveMeta();
+            updateStarButton();
+            updateUI();
+        }
+
+        // Handle exercise input change & clear fields when empty
+        exerciseInput.addEventListener('input', () => {
+            const val = exerciseInput.value.trim();
+            if (val) {
+                autofillExerciseData(val);
+            } else {
+                weightInput.value = '';
+                document.getElementById('sets').value = '';
+                document.getElementById('reps').value = '';
+            }
+            updateStarButton();
+            updateWeightFieldState();
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            const exercise = exerciseInput.value.trim();
+            const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
+            const sets = parseInt(document.getElementById('sets').value);
+            const reps = parseInt(document.getElementById('reps').value);
+
+            // Parse optional tags
+            const rawTags = tagsInput.value.trim();
+            const tags = rawTags 
+                ? rawTags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
+                : [];
+
+            ensureMeta(exercise);
+
+            const newEntry = { id: Date.now(), date, exercise, weight, sets, reps, tags };
+            workouts.push(newEntry);
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            
+            updateUI();
+            resetLogForm();
+        });
+
+        filter.addEventListener('change', updateChart);
+        timeframeFilter.addEventListener('change', updateChart);
+
+        function deleteEntry(id) {
+            if (confirm("Are you sure you want to delete this set?")) {
+                workouts = workouts.filter(w => w.id !== id);
+                localStorage.setItem('workouts', JSON.stringify(workouts));
+                updateUI();
+            }
+        }
+
+        // Select Favorite & Smooth Scroll to Top
+        function selectFavorite(exName) {
+            exerciseInput.value = exName;
+            autofillExerciseData(exName);
+            updateStarButton();
+            updateWeightFieldState();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateFavoritesList() {
+            const container = document.getElementById('favorites-list');
+            container.innerHTML = '';
+            
+            const favExercises = Object.keys(exerciseMeta).filter(k => exerciseMeta[k].favorite);
+            
+            if (favExercises.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; font-size: 0.9em; margin: 0;">No favorites added yet. Click the star ★ next to an exercise to favorite it!</p>';
+                return;
+            }
+
+            const todayStr = getPacificDateString();
+
+            // Map favorites by category
+            const categorizedFavs = {};
+            FAVORITE_CATEGORIES.forEach(cat => categorizedFavs[cat] = []);
+            categorizedFavs["Uncategorized"] = [];
+
+            favExercises.forEach(ex => {
+                const meta = getMeta(ex);
+                const activeFavCats = (meta.categories || [])
+                    .map(c => c === "Legs" ? "Lower Body" : c)
+                    .filter(c => FAVORITE_CATEGORIES.includes(c));
+
+                if (activeFavCats.length > 0) {
+                    [...new Set(activeFavCats)].forEach(cat => {
+                        categorizedFavs[cat].push(ex);
+                    });
+                } else {
+                    categorizedFavs["Uncategorized"].push(ex);
+                }
+            });
+
+            const allCatKeys = [...FAVORITE_CATEGORIES, "Uncategorized"];
+
+            allCatKeys.forEach(cat => {
+                const exercisesInCat = categorizedFavs[cat];
+                if (exercisesInCat && exercisesInCat.length > 0) {
+                    exercisesInCat.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                    const uniqueEx = [...new Set(exercisesInCat)];
+
+                    const groupDiv = document.createElement('div');
+                    groupDiv.style.marginBottom = '14px';
+
+                    const catHeader = document.createElement('div');
+                    catHeader.textContent = cat;
+                    catHeader.style.fontSize = '0.8em';
+                    catHeader.style.fontWeight = 'bold';
+                    catHeader.style.color = '#64748b';
+                    catHeader.style.textTransform = 'uppercase';
+                    catHeader.style.letterSpacing = '0.5px';
+                    catHeader.style.marginBottom = '6px';
+
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'favorites-grid';
+
+                    uniqueEx.forEach(ex => {
+                        const btn = document.createElement('button');
+                        btn.className = 'fav-btn';
+                        btn.type = 'button';
+                        btn.textContent = ex;
+
+                        const isLoggedToday = workouts.some(w => 
+                            w.exercise.toLowerCase() === ex.toLowerCase() && w.date === todayStr
+                        );
+
+                        if (isLoggedToday) {
+                            btn.classList.add('logged');
+                            btn.title = 'Already logged today';
+                        }
+
+                        btn.onclick = () => selectFavorite(ex);
+                        gridDiv.appendChild(btn);
+                    });
+
+                    groupDiv.appendChild(catHeader);
+                    groupDiv.appendChild(gridDiv);
+                    container.appendChild(groupDiv);
+                }
+            });
+        }
+
+        function updateUI() {
+            updateTable();
+            updateExerciseLists();
+            updateFavoritesList();
+            updateChart();
+        }
+
+        // Render History Table (Most recently added entry appears first)
+        function updateTable() {
+            const tbody = document.querySelector('#history-table tbody');
+            tbody.innerHTML = '';
+            
+            const sorted = [...workouts].sort((a, b) => (b.id || 0) - (a.id || 0));
+            
+            sorted.forEach(w => {
+                const tr = document.createElement('tr');
+                const displaySets = w.sets ? w.sets : '-';
+                
+                const tagBadges = (w.tags && w.tags.length > 0)
+                    ? w.tags.map(t => `<span class="tag-pill">#${t}</span>`).join('')
+                    : '-';
+
+                tr.innerHTML = `
+                    <td>${w.date}</td>
+                    <td>${w.exercise}</td>
+                    <td>${w.weight}</td>
+                    <td>${displaySets}</td>
+                    <td>${w.reps}</td>
+                    <td>${tagBadges}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${w.id})">X</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateExerciseLists() {
+            const exercises = [...new Set([
+                ...workouts.map(w => w.exercise),
+                ...Object.keys(exerciseMeta)
+            ])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            
+            const currentSelection = filter.value;
+            filter.innerHTML = '<option value="">-- Select Exercise --</option>';
+            datalist.innerHTML = '';
+
+            if (exercises.length === 0) return;
+
+            exercises.forEach(ex => {
+                const option = document.createElement('option');
+                option.value = ex;
+                option.textContent = ex;
+                if (ex === currentSelection) option.selected = true;
+                filter.appendChild(option);
+
+                const dataOption = document.createElement('option');
+                dataOption.value = ex;
+                datalist.appendChild(dataOption);
+            });
+
+            if (!filter.value && exercises.length > 0) {
+                filter.value = exercises[0];
+            }
+        }
+
+        function updateChart() {
+            const selectedEx = filter.value;
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            if (!selectedEx || workouts.length === 0) return;
+
+            let data = workouts.filter(w => w.exercise === selectedEx);
+
+            if (data.length === 0) return;
+
+            const selectedTimeframe = timeframeFilter.value;
+            const cutoffDate = getCutoffDateString(selectedTimeframe);
+
+            if (cutoffDate) {
+                data = data.filter(w => w.date >= cutoffDate);
+            }
+
+            if (data.length === 0) return;
+
+            const meta = getMeta(selectedEx);
+            const isBodyweight = meta.categories && meta.categories.includes("Bodyweight");
+
+            const dateTotals = {};
+            data.forEach(w => {
+                const numSets = w.sets ? w.sets : 1;
+                const volume = isBodyweight ? (numSets * w.reps) : (w.weight * numSets * w.reps);
+                
+                if (dateTotals[w.date]) {
+                    dateTotals[w.date] += volume;
+                } else {
+                    dateTotals[w.date] = volume;
+                }
+            });
+
+            const dates = Object.keys(dateTotals).sort((a, b) => new Date(a) - new Date(b));
+            const totalVolumes = dates.map(d => dateTotals[d]);
+
+            const yAxisLabel = isBodyweight ? 'Total Volume' : 'Total Weight';
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        data: totalVolumes,
+                        backgroundColor: 'rgba(37, 99, 235, 0.75)',
+                        borderColor: '#2563eb',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return isBodyweight 
+                                        ? `Total Volume: ${context.parsed.y} reps` 
+                                        : `Total Weight: ${context.parsed.y} lbs/kg`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { 
+                            beginAtZero: true,
+                            title: { display: true, text: yAxisLabel },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        /* --- Settings Modal Logic --- */
+        function openSettings() {
+            resetLogForm();
+            renderSettingsList();
+            document.getElementById('settings-modal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        function addNewExerciseFromSettings(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-exercise-input');
+            const exName = input.value.trim();
+
+            if (exName) {
+                ensureMeta(exName);
+                input.value = '';
+                updateUI();
+                renderSettingsList();
+            }
+        }
+
+        function renderSettingsList() {
+            const container = document.getElementById('settings-exercise-list');
+            container.innerHTML = '';
+
+            const allExercises = [...new Set([
+                ...workouts.map(w => w.exercise),
+                ...Object.keys(exerciseMeta)
+            ])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+            if (allExercises.length === 0) {
+                container.innerHTML = '<p style="color: #64748b;">No exercises added yet.</p>';
+                return;
+            }
+
+            allExercises.forEach(ex => {
+                const meta = ensureMeta(ex);
+                if (!meta.subcategories) meta.subcategories = [];
+
+                const item = document.createElement('div');
+                item.className = 'setting-item';
+
+                const topRow = document.createElement('div');
+                topRow.className = 'setting-row';
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = ex;
+                nameInput.style.flex = '1';
+                nameInput.onfocus = function() { this.select(); };
+                nameInput.onchange = () => {
+                    const newName = nameInput.value.trim();
+                    if (newName && newName !== ex) {
+                        renameExercise(ex, newName);
+                    }
+                };
+
+                const favBtn = document.createElement('button');
+                favBtn.className = 'star-btn' + (meta.favorite ? ' active' : '');
+                favBtn.textContent = '★';
+                favBtn.type = 'button';
+                favBtn.onclick = () => {
+                    meta.favorite = !meta.favorite;
+                    saveMeta();
+                    renderSettingsList();
+                    updateFavoritesList();
+                    updateStarButton();
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'X';
+                deleteBtn.type = 'button';
+                deleteBtn.title = 'Delete Exercise';
+                deleteBtn.onclick = () => {
+                    if (confirm(`Are you sure you want to delete "${ex}" and all its history?`)) {
+                        deleteExercise(ex);
+                    }
+                };
+
+                topRow.appendChild(nameInput);
+                topRow.appendChild(favBtn);
+                topRow.appendChild(deleteBtn);
+
+                const catLabel = document.createElement('label');
+                catLabel.textContent = 'Categories:';
+
+                const chipsDiv = document.createElement('div');
+                chipsDiv.className = 'category-chips';
+
+                CATEGORIES.forEach(cat => {
+                    const chip = document.createElement('div');
+                    const isSelected = meta.categories.includes(cat);
+                    chip.className = 'category-chip' + (isSelected ? ' selected' : '');
+                    chip.textContent = cat;
+                    chip.onclick = () => {
+                        if (isSelected) {
+                            meta.categories = meta.categories.filter(c => c !== cat);
+                            const allowedSubs = SUBCATEGORIES[cat] || [];
+                            meta.subcategories = meta.subcategories.filter(s => !allowedSubs.includes(s));
+                        } else {
+                            meta.categories.push(cat);
+                        }
+                        saveMeta();
+                        renderSettingsList();
+                        updateFavoritesList();
+                        updateWeightFieldState();
+                    };
+                    chipsDiv.appendChild(chip);
+                });
+
+                item.appendChild(topRow);
+                item.appendChild(catLabel);
+                item.appendChild(chipsDiv);
+
+                const availableSubcats = [];
+                meta.categories.forEach(cat => {
+                    if (SUBCATEGORIES[cat]) {
+                        availableSubcats.push(...SUBCATEGORIES[cat]);
+                    }
+                });
+
+                if (availableSubcats.length > 0) {
+                    const sortedSubcats = [...new Set(availableSubcats)].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+                    const subCatLabel = document.createElement('label');
+                    subCatLabel.textContent = 'Subcategories:';
+                    subCatLabel.style.marginTop = '10px';
+
+                    const subChipsDiv = document.createElement('div');
+                    subChipsDiv.className = 'category-chips';
+
+                    sortedSubcats.forEach(sub => {
+                        const subChip = document.createElement('div');
+                        const isSubSelected = meta.subcategories.includes(sub);
+                        subChip.className = 'category-chip' + (isSubSelected ? ' selected' : '');
+                        subChip.textContent = sub;
+                        subChip.onclick = () => {
+                            if (isSubSelected) {
+                                meta.subcategories = meta.subcategories.filter(s => s !== sub);
+                            } else {
+                                meta.subcategories.push(sub);
+                            }
+                            saveMeta();
+                            renderSettingsList();
+                        };
+                        subChipsDiv.appendChild(subChip);
+                    });
+
+                    item.appendChild(subCatLabel);
+                    item.appendChild(subChipsDiv);
+                }
+
+                container.appendChild(item);
+            });
+        }
+
+        function renameExercise(oldName, newName) {
+            workouts.forEach(w => {
+                if (w.exercise.toLowerCase() === oldName.toLowerCase()) {
+                    w.exercise = newName;
+                }
+            });
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === oldName.toLowerCase());
+            if (key) {
+                exerciseMeta[newName] = exerciseMeta[key];
+                if (key !== newName) delete exerciseMeta[key];
+            } else {
+                exerciseMeta[newName] = { favorite: false, categories: [], subcategories: [] };
+            }
+            saveMeta();
+
+            updateUI();
+            renderSettingsList();
+        }
+
+        function deleteExercise(exName) {
+            workouts = workouts.filter(w => w.exercise.toLowerCase() !== exName.toLowerCase());
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            if (key) {
+                delete exerciseMeta[key];
+                saveMeta();
+            }
+
+            updateUI();
+            renderSettingsList();
+        }
+
+        // Initialize app on page load
+        updateUI();
+    </script>
 </body>
 </html>
