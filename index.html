@@ -90,7 +90,7 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Favorite Star Button (No background, light gray or yellow star) */
+        /* Favorite Star Button */
         .star-btn {
             background: transparent;
             color: #cbd5e1; /* Light gray star by default */
@@ -276,7 +276,7 @@
                 <div class="form-group">
                     <label>Exercise Name</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" required>
+                        <input type="text" id="exercise" list="exercise-history" placeholder="Type or select an exercise..." autocomplete="off" onfocus="this.select()" required>
                         <button type="button" id="star-btn" class="star-btn" onclick="toggleFavoriteFromForm()" title="Favorite Exercise">★</button>
                     </div>
                     <datalist id="exercise-history"></datalist>
@@ -284,15 +284,15 @@
                 <div class="form-group" style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Weight</label>
-                        <input type="number" id="weight" step="0.5" required>
+                        <input type="number" id="weight" step="0.5" onfocus="this.select()" required>
                     </div>
                     <div style="flex: 1;">
                         <label>Sets</label>
-                        <input type="number" id="sets" required>
+                        <input type="number" id="sets" onfocus="this.select()" required>
                     </div>
                     <div style="flex: 1;">
                         <label>Reps</label>
-                        <input type="number" id="reps" required>
+                        <input type="number" id="reps" onfocus="this.select()" required>
                     </div>
                 </div>
                 <button type="submit">Save</button>
@@ -426,7 +426,7 @@
             localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
         }
 
-        // Ensure every existing item has a unique ID for deletion
+        // Ensure every existing item has a unique ID for deletion & sorting
         workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
         localStorage.setItem('workouts', JSON.stringify(workouts));
 
@@ -478,7 +478,6 @@
 
         // Switch between tabs
         function switchTab(tabName) {
-            // Clear log form fields when navigating away from the log tab without saving
             if (tabName !== 'log') {
                 resetLogForm();
             }
@@ -507,7 +506,7 @@
             const matching = workouts.filter(w => w.exercise.toLowerCase() === exName.toLowerCase());
             
             if (matching.length > 0) {
-                const newest = matching.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                const newest = matching.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
                 if (newest) {
                     weightInput.value = newest.weight;
                     document.getElementById('sets').value = newest.sets ? newest.sets : '';
@@ -610,11 +609,13 @@
             }
         }
 
+        // Select Favorite & Smooth Scroll to Top
         function selectFavorite(exName) {
             exerciseInput.value = exName;
             autofillExerciseData(exName);
             updateStarButton();
             updateWeightFieldState();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateFavoritesList() {
@@ -630,30 +631,26 @@
 
             const todayStr = getPacificDateString();
 
-            // Map favorites by category (using FAVORITE_CATEGORIES which excludes Bodyweight)
+            // Map favorites by category
             const categorizedFavs = {};
             FAVORITE_CATEGORIES.forEach(cat => categorizedFavs[cat] = []);
             categorizedFavs["Uncategorized"] = [];
 
             favExercises.forEach(ex => {
                 const meta = getMeta(ex);
-                // Filter categories to only those present in FAVORITE_CATEGORIES
                 const activeFavCats = (meta.categories || [])
                     .map(c => c === "Legs" ? "Lower Body" : c)
                     .filter(c => FAVORITE_CATEGORIES.includes(c));
 
                 if (activeFavCats.length > 0) {
-                    // Place into assigned active favorite categories
                     [...new Set(activeFavCats)].forEach(cat => {
                         categorizedFavs[cat].push(ex);
                     });
                 } else {
-                    // Place in Uncategorized if no other valid favorite category exists
                     categorizedFavs["Uncategorized"].push(ex);
                 }
             });
 
-            // Display favorites arranged by Category
             const allCatKeys = [...FAVORITE_CATEGORIES, "Uncategorized"];
 
             allCatKeys.forEach(cat => {
@@ -683,7 +680,6 @@
                         btn.type = 'button';
                         btn.textContent = ex;
 
-                        // Check if exercise has already been logged today
                         const isLoggedToday = workouts.some(w => 
                             w.exercise.toLowerCase() === ex.toLowerCase() && w.date === todayStr
                         );
@@ -711,11 +707,12 @@
             updateChart();
         }
 
+        // Render History Table (Most recently added entry appears first)
         function updateTable() {
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
             
-            const sorted = [...workouts].sort((a,b) => new Date(b.date) - new Date(a.date));
+            const sorted = [...workouts].sort((a, b) => (b.id || 0) - (a.id || 0));
             
             sorted.forEach(w => {
                 const tr = document.createElement('tr');
@@ -776,7 +773,6 @@
 
             if (data.length === 0) return;
 
-            // Apply timeline filter while ensuring we never show data before the first tracked date
             const selectedTimeframe = timeframeFilter.value;
             const cutoffDate = getCutoffDateString(selectedTimeframe);
 
@@ -786,11 +782,9 @@
 
             if (data.length === 0) return;
 
-            // Check if the selected exercise is categorized as "Bodyweight"
             const meta = getMeta(selectedEx);
             const isBodyweight = meta.categories && meta.categories.includes("Bodyweight");
 
-            // Combine/aggregate totals for multiple instances logged on the same date
             const dateTotals = {};
             data.forEach(w => {
                 const numSets = w.sets ? w.sets : 1;
@@ -803,7 +797,6 @@
                 }
             });
 
-            // Sort dates chronologically
             const dates = Object.keys(dateTotals).sort((a, b) => new Date(a) - new Date(b));
             const totalVolumes = dates.map(d => dateTotals[d]);
 
@@ -837,20 +830,11 @@
                         }
                     },
                     scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
+                        x: { grid: { display: false } },
                         y: { 
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: yAxisLabel
-                            },
-                            grid: {
-                                display: false
-                            }
+                            title: { display: true, text: yAxisLabel },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -902,7 +886,6 @@
                 const item = document.createElement('div');
                 item.className = 'setting-item';
 
-                // Top Row: Name Input, Favorite Star, and Red Delete X Button
                 const topRow = document.createElement('div');
                 topRow.className = 'setting-row';
 
@@ -910,6 +893,7 @@
                 nameInput.type = 'text';
                 nameInput.value = ex;
                 nameInput.style.flex = '1';
+                nameInput.onfocus = function() { this.select(); };
                 nameInput.onchange = () => {
                     const newName = nameInput.value.trim();
                     if (newName && newName !== ex) {
@@ -944,7 +928,6 @@
                 topRow.appendChild(favBtn);
                 topRow.appendChild(deleteBtn);
 
-                // Category Chips Selector
                 const catLabel = document.createElement('label');
                 catLabel.textContent = 'Categories:';
 
@@ -959,7 +942,6 @@
                     chip.onclick = () => {
                         if (isSelected) {
                             meta.categories = meta.categories.filter(c => c !== cat);
-                            // Clean up subcategories that belonged to the unselected category
                             const allowedSubs = SUBCATEGORIES[cat] || [];
                             meta.subcategories = meta.subcategories.filter(s => !allowedSubs.includes(s));
                         } else {
@@ -977,7 +959,6 @@
                 item.appendChild(catLabel);
                 item.appendChild(chipsDiv);
 
-                // Subcategories Chips Selector
                 const availableSubcats = [];
                 meta.categories.forEach(cat => {
                     if (SUBCATEGORIES[cat]) {
