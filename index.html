@@ -4,53 +4,93 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workout Tracker SPA</title>
-  <!-- Chart.js CDN -->
+  <!-- Chart.js Library for Volume Tracking -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* ==========================================================================
+       1. CSS VARIABLES & THEMING
+       ========================================================================== */
     :root {
-      --bg: #121212;
-      --card-bg: #1e1e1e;
-      --accent: #3b82f6;
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --input-bg: #0f172a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #3b82f6;
       --accent-hover: #2563eb;
+      --accent-soft: rgba(59, 130, 246, 0.15);
       --danger: #ef4444;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --border: #374151;
-      --input-bg: #2b2b2b;
+      --danger-hover: #dc2626;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --badge-bg: #334155;
+      --badge-tag-bg: #1e3a8a;
+      --badge-tag-text: #93c5fd;
+      --radius: 10px;
+      --transition: all 0.2s ease-in-out;
     }
 
+    /* ==========================================================================
+       2. BASE & RESET STYLES
+       ========================================================================== */
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
       display: flex;
       justify-content: center;
+      padding: 20px 12px;
     }
 
-    .app-container {
+    .app-wrapper {
       width: 100%;
-      max-width: 650px;
+      max-width: 720px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
-    h1, h2, h3 {
-      margin: 0 0 12px 0;
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 16px 20px;
+      border-radius: var(--radius);
     }
 
-    /* Navigation Tabs */
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .pst-clock {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--input-bg);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+    }
+
+    /* ==========================================================================
+       3. NAVIGATION TABS
+       ========================================================================== */
     .nav-tabs {
       display: flex;
       background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
       padding: 6px;
       gap: 6px;
     }
@@ -60,114 +100,178 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      padding: 10px 4px;
+      padding: 12px 6px;
       font-size: 0.9rem;
       font-weight: 600;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background-color: rgba(255, 255, 255, 0.05);
     }
 
     .tab-btn.active {
-      background-color: var(--accent);
+      background-color: var(--accent-primary);
       color: #ffffff;
     }
 
-    /* Card Layouts */
+    /* ==========================================================================
+       4. CARDS & TAB PANELS
+       ========================================================================== */
     .card {
       background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
     }
 
-    .tab-content {
+    .tab-panel {
       display: none;
     }
 
-    .tab-content.active {
+    .tab-panel.active {
       display: block;
     }
 
-    /* Form Elements */
+    .panel-header {
+      margin-bottom: 20px;
+    }
+
+    .panel-header h2 {
+      font-size: 1.2rem;
+      color: var(--text-main);
+    }
+
+    .panel-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ==========================================================================
+       5. FORMS & INPUT CONTROLS
+       ========================================================================== */
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
     .form-group {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
     }
 
     label {
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.8rem;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    input, select, button {
+    input[type="text"],
+    input[type="number"],
+    select {
       background-color: var(--input-bg);
-      border: 1px solid var(--border);
+      border: 1px solid var(--card-border);
       border-radius: 8px;
-      color: var(--text);
-      padding: 10px 12px;
+      color: var(--text-main);
+      padding: 12px 14px;
       font-size: 0.95rem;
+      width: 100%;
+      transition: var(--transition);
     }
 
     input:focus, select:focus {
-      outline: 2px solid var(--accent);
-      border-color: transparent;
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
-    /* Checkbox & Tag Options */
+    /* Tag Checkboxes */
     .tag-group {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
 
-    .tag-option {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--input-bg);
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 0.9rem;
+    .tag-checkbox {
+      display: none;
     }
 
-    .tag-option input {
+    .tag-label {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
       cursor: pointer;
+      user-select: none;
+      transition: var(--transition);
+    }
+
+    .tag-checkbox:checked + .tag-label {
+      background-color: var(--accent-soft);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      font-weight: 600;
     }
 
     /* Buttons */
-    .btn-primary {
-      background-color: var(--accent);
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      padding: 12px;
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
       border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-primary);
+      color: white;
       width: 100%;
-      margin-top: 10px;
-      transition: background 0.2s;
+      margin-top: 8px;
     }
 
     .btn-primary:hover {
       background-color: var(--accent-hover);
     }
 
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
     .btn-danger {
       background-color: transparent;
-      color: var(--danger);
       border: 1px solid var(--danger);
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      border-radius: 6px;
-      cursor: pointer;
+      color: var(--danger);
+      padding: 6px 10px;
+      font-size: 0.8rem;
     }
 
     .btn-danger:hover {
@@ -175,110 +279,191 @@
       color: white;
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    /* Badges */
+    /* ==========================================================================
+       6. BADGES, LISTS, & HISTORY ITEMS
+       ========================================================================== */
     .badge {
       display: inline-block;
       font-size: 0.75rem;
-      background: #374151;
+      background: var(--badge-bg);
+      color: var(--text-main);
       padding: 3px 8px;
-      border-radius: 12px;
+      border-radius: 6px;
       margin-right: 4px;
       margin-top: 4px;
     }
 
     .badge-tag {
-      background: #1e3a8a;
-      color: #93c5fd;
+      background: var(--badge-tag-bg);
+      color: var(--badge-tag-text);
     }
 
-    /* History & Lists */
+    .search-bar {
+      margin-bottom: 16px;
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .log-item {
-      border-bottom: 1px solid var(--border);
-      padding: 14px 0;
+      background-color: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px 16px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
 
-    .log-item:last-child {
-      border-bottom: none;
+    .log-details h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
     }
 
-    .log-info {
+    .log-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .log-timestamp {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    .log-actions {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
 
-    .exercise-list-item {
+    .exercise-mgr-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
+      padding: 12px 14px;
       background: var(--input-bg);
+      border: 1px solid var(--card-border);
       border-radius: 8px;
       margin-bottom: 8px;
     }
 
-    .fav-btn {
+    .fav-toggle {
       background: none;
       border: none;
+      font-size: 1.3rem;
       cursor: pointer;
-      font-size: 1.2rem;
+      color: #64748b;
+      padding: 0 4px;
     }
 
-    /* Chart Canvas */
-    .chart-container {
+    .fav-toggle.active {
+      color: #f59e0b;
+    }
+
+    /* ==========================================================================
+       7. CHART CONTAINER
+       ========================================================================== */
+    .chart-box {
       position: relative;
       width: 100%;
-      height: 300px;
-      margin-top: 10px;
+      height: 320px;
+      margin-top: 16px;
+    }
+
+    /* ==========================================================================
+       8. MODAL WINDOWS
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
 
-<div class="app-container">
-  <!-- Navigation Tabs -->
+<div class="app-wrapper">
+  <!-- Top App Header -->
+  <header>
+    <h1>Workout Tracker</h1>
+    <div id="pst-clock" class="pst-clock">--:-- -- PST</div>
+  </header>
+
+  <!-- Navigation Bar -->
   <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('log-tab')">Log</button>
-    <button class="tab-btn" onclick="switchTab('charts-tab')">Progress</button>
-    <button class="tab-btn" onclick="switchTab('history-tab')">History</button>
-    <button class="tab-btn" onclick="switchTab('settings-tab')">Manage</button>
+    <button class="tab-btn active" onclick="switchTab('log-panel')">Log</button>
+    <button class="tab-btn" onclick="switchTab('charts-panel')">Progress</button>
+    <button class="tab-btn" onclick="switchTab('history-panel')">History</button>
+    <button class="tab-btn" onclick="switchTab('settings-panel')">Manage</button>
   </nav>
 
-  <!-- TAB 1: LOG WORKOUT -->
-  <div id="log-tab" class="tab-content card active">
-    <h2>Log Exercise</h2>
-    <form id="workout-form">
-      <!-- Select or Type Exercise -->
+  <!-- TAB 1: WORKOUT LOGGING PANEL -->
+  <div id="log-panel" class="tab-panel card active">
+    <div class="panel-header">
+      <h2>Log Exercise</h2>
+      <p>Record your workout details, sets, reps, and targets.</p>
+    </div>
+
+    <form id="workout-form" class="form-grid">
+      <!-- Preset Selection -->
       <div class="form-group">
-        <label for="exercise-select">Select Exercise</label>
-        <select id="exercise-select">
+        <label for="exercise-preset">Preset Exercises</label>
+        <select id="exercise-preset">
           <option value="">-- Choose Existing or Type Below --</option>
         </select>
       </div>
 
+      <!-- Exercise Name -->
       <div class="form-group">
         <label for="exercise-name">Exercise Name</label>
         <input type="text" id="exercise-name" placeholder="e.g. Bench Press, Pull Up" required>
       </div>
 
-      <!-- Tags Section -->
+      <!-- Tags Checklist -->
       <div class="form-group">
         <label>Tags</label>
         <div class="tag-group">
-          <label class="tag-option"><input type="checkbox" name="tags" value="Bodyweight"> Bodyweight</label>
-          <label class="tag-option"><input type="checkbox" name="tags" value="Push"> Push</label>
-          <label class="tag-option"><input type="checkbox" name="tags" value="Pull"> Pull</label>
+          <input type="checkbox" id="tag-bw" class="tag-checkbox" value="Bodyweight">
+          <label for="tag-bw" class="tag-label">Bodyweight</label>
+
+          <input type="checkbox" id="tag-push" class="tag-checkbox" value="Push">
+          <label for="tag-push" class="tag-label">Push</label>
+
+          <input type="checkbox" id="tag-pull" class="tag-checkbox" value="Pull">
+          <label for="tag-pull" class="tag-label">Pull</label>
         </div>
       </div>
 
-      <!-- Groups Section (Replaces Categories) -->
+      <!-- Tier 1: Muscle Group -->
       <div class="form-group">
         <label for="group-select">Groups</label>
         <select id="group-select" required>
@@ -292,72 +477,142 @@
         </select>
       </div>
 
-      <!-- Dynamic Subcategory Dropdown -->
-      <div class="form-group hidden" id="subcategory-container">
-        <label id="subcategory-label" for="subcategory-select">Subcategory</label>
-        <select id="subcategory-select">
+      <!-- Tier 2: Dynamic Subcategory -->
+      <div id="sub-group-container" class="form-group hidden">
+        <label id="sub-group-label" for="sub-group-select">Subcategory</label>
+        <select id="sub-group-select">
           <option value="">-- Select Option --</option>
         </select>
       </div>
 
-      <!-- Dynamic Sub-Subcategory Dropdown -->
-      <div class="form-group hidden" id="sub-subcategory-container">
-        <label id="sub-subcategory-label" for="sub-subcategory-select">Sub-Subcategory</label>
-        <select id="sub-subcategory-select">
+      <!-- Tier 3: Dynamic Sub-Subcategory -->
+      <div id="sub-sub-group-container" class="form-group hidden">
+        <label id="sub-sub-group-label" for="sub-sub-group-select">Sub-Subcategory</label>
+        <select id="sub-sub-group-select">
           <option value="">-- Select Option --</option>
         </select>
       </div>
 
-      <!-- Weight, Sets, Reps -->
-      <div style="display: flex; gap: 10px;">
-        <div class="form-group" style="flex: 1;">
+      <!-- Weight, Sets, Reps Inputs -->
+      <div class="form-row">
+        <div class="form-group">
           <label for="weight">Weight (lbs)</label>
           <input type="number" id="weight" min="0" step="0.5" placeholder="0">
         </div>
-        <div class="form-group" style="flex: 1;">
+        <div class="form-group">
           <label for="sets">Sets</label>
           <input type="number" id="sets" min="1" placeholder="3" required>
         </div>
-        <div class="form-group" style="flex: 1;">
+        <div class="form-group">
           <label for="reps">Reps</label>
           <input type="number" id="reps" min="1" placeholder="10" required>
         </div>
       </div>
 
-      <button type="submit" class="btn-primary">Save Workout Log</button>
+      <button type="submit" class="btn btn-primary">Save Workout Log</button>
     </form>
   </div>
 
-  <!-- TAB 2: PROGRESS CHARTS -->
-  <div id="charts-tab" class="tab-content card">
-    <h2>Volume Progression</h2>
+  <!-- TAB 2: PROGRESS CHARTS PANEL -->
+  <div id="charts-panel" class="tab-panel card">
+    <div class="panel-header">
+      <h2>Volume Progression</h2>
+      <p>Track cumulative weight or repetition volume over time.</p>
+    </div>
+
     <div class="form-group">
       <label for="chart-filter">Filter by Exercise</label>
       <select id="chart-filter">
         <option value="ALL">All Exercises (Total Volume)</option>
       </select>
     </div>
-    <div class="chart-container">
+
+    <div class="chart-box">
       <canvas id="volumeChart"></canvas>
     </div>
   </div>
 
-  <!-- TAB 3: HISTORY -->
-  <div id="history-tab" class="tab-content card">
-    <h2>Workout History (PST)</h2>
-    <div id="log-list">No workouts logged yet.</div>
+  <!-- TAB 3: WORKOUT HISTORY PANEL -->
+  <div id="history-panel" class="tab-panel card">
+    <div class="panel-header">
+      <h2>Workout History</h2>
+      <p>Review logged entries (Timestamps in Pacific Standard Time).</p>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="history-search" placeholder="Search logs by exercise, tag, or muscle group..." oninput="renderHistory()">
+    </div>
+
+    <div id="log-list-container" class="log-list">
+      <!-- Dynamic Logs Rendered Here -->
+    </div>
   </div>
 
-  <!-- TAB 4: MANAGE EXERCISES -->
-  <div id="settings-tab" class="tab-content card">
-    <h2>Manage Exercises</h2>
-    <p style="font-size: 0.85rem; color: var(--text-muted);">Toggle favorites or remove custom presets.</p>
-    <div id="exercise-manage-list"></div>
+  <!-- TAB 4: MANAGEMENT & SETTINGS PANEL -->
+  <div id="settings-panel" class="tab-panel card">
+    <div class="panel-header">
+      <h2>Exercise Management & Data</h2>
+      <p>Configure exercise presets, toggle favorites, or back up data.</p>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label>Stored Presets</label>
+      <div id="exercise-manager-list">
+        <!-- Dynamic Preset List -->
+      </div>
+    </div>
+
+    <div class="panel-header" style="margin-top: 30px;">
+      <h2>Data Backup & Restore</h2>
+    </div>
+
+    <div class="form-row">
+      <button class="btn btn-secondary" onclick="exportDataJSON()">Export JSON</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">Import JSON</button>
+      <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importDataJSON(event)">
+    </div>
+
+    <button class="btn btn-danger" style="margin-top: 16px; width: 100%;" onclick="clearAllData()">Clear All Application Data</button>
+  </div>
+</div>
+
+<!-- EDIT LOG MODAL OVERLAY -->
+<div id="edit-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Edit Workout Log</h2>
+    <input type="hidden" id="edit-log-id">
+    
+    <div class="form-group">
+      <label for="edit-exercise-name">Exercise</label>
+      <input type="text" id="edit-exercise-name" required>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="edit-weight">Weight (lbs)</label>
+        <input type="number" id="edit-weight" min="0" step="0.5">
+      </div>
+      <div class="form-group">
+        <label for="edit-sets">Sets</label>
+        <input type="number" id="edit-sets" min="1" required>
+      </div>
+      <div class="form-group">
+        <label for="edit-reps">Reps</label>
+        <input type="number" id="edit-reps" min="1" required>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+      <button class="btn btn-primary" style="flex: 1;" onclick="saveEditLog()">Save Changes</button>
+      <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditModal()">Cancel</button>
+    </div>
   </div>
 </div>
 
 <script>
-  // Dynamic Multi-Tier Taxonomy Data Structure
+  /* ==========================================================================
+     1. TAXONOMY CONFIGURATION (MULTI-TIER NESTED STRUCTURE)
+     ========================================================================== */
   const taxonomyData = {
     "Arms": {
       label: "Arm Muscles",
@@ -405,7 +660,9 @@
     }
   };
 
-  // State Management
+  /* ==========================================================================
+     2. GLOBAL STATE & LOCAL STORAGE INITIALIZATION
+     ========================================================================== */
   let logs = JSON.parse(localStorage.getItem('workout_logs') || '[]');
   let exercises = JSON.parse(localStorage.getItem('workout_exercises') || '[]');
   let chartInstance = null;
@@ -420,36 +677,69 @@
     localStorage.setItem('workout_exercises', JSON.stringify(exercises));
   }
 
-  // DOM Handles
+  /* ==========================================================================
+     3. DOM ELEMENTS
+     ========================================================================== */
   const groupSelect = document.getElementById('group-select');
-  const subContainer = document.getElementById('subcategory-container');
-  const subLabel = document.getElementById('subcategory-label');
-  const subSelect = document.getElementById('subcategory-select');
+  const subContainer = document.getElementById('sub-group-container');
+  const subLabel = document.getElementById('sub-group-label');
+  const subSelect = document.getElementById('sub-group-select');
 
-  const subSubContainer = document.getElementById('sub-subcategory-container');
-  const subSubLabel = document.getElementById('sub-subcategory-label');
-  const subSubSelect = document.getElementById('sub-subcategory-select');
+  const subSubContainer = document.getElementById('sub-sub-group-container');
+  const subSubLabel = document.getElementById('sub-sub-group-label');
+  const subSubSelect = document.getElementById('sub-sub-group-select');
 
-  const exerciseSelect = document.getElementById('exercise-select');
+  const exercisePresetSelect = document.getElementById('exercise-preset');
   const exerciseNameInput = document.getElementById('exercise-name');
   const workoutForm = document.getElementById('workout-form');
 
-  // Tab Navigation
-  function switchTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  /* ==========================================================================
+     4. PST CLOCK & TIME FUNCTIONS
+     ========================================================================== */
+  function updatePSTClock() {
+    const now = new Date();
+    const formatted = now.toLocaleTimeString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    document.getElementById('pst-clock').textContent = `${formatted} PST`;
+  }
+  setInterval(updatePSTClock, 1000);
+  updatePSTClock();
 
-    const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
-    if (activeBtn) activeBtn.classList.add('active');
-    
-    document.getElementById(tabId).classList.add('active');
-
-    if (tabId === 'charts-tab') updateChart();
-    if (tabId === 'history-tab') renderHistory();
-    if (tabId === 'settings-tab') renderExerciseManager();
+  function formatPSTDate(isoString) {
+    return new Date(isoString).toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   }
 
-  // Handle Dynamic Subcategory Selection
+  /* ==========================================================================
+     5. NAVIGATION & TAB SWITCHING
+     ========================================================================== */
+  function switchTab(panelId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+    const btnMatch = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(panelId));
+    if (btnMatch) btnMatch.classList.add('active');
+
+    document.getElementById(panelId).classList.add('active');
+
+    if (panelId === 'charts-panel') updateChart();
+    if (panelId === 'history-panel') renderHistory();
+    if (panelId === 'settings-panel') renderExerciseManager();
+  }
+
+  /* ==========================================================================
+     6. DYNAMIC TAXONOMY DROPDOWNS
+     ========================================================================== */
   groupSelect.addEventListener('change', (e) => {
     const selectedGroup = e.target.value;
 
@@ -465,8 +755,8 @@
     const groupConfig = taxonomyData[selectedGroup];
     subLabel.textContent = groupConfig.label;
 
-    const items = Array.isArray(groupConfig.options) 
-      ? groupConfig.options 
+    const items = Array.isArray(groupConfig.options)
+      ? groupConfig.options
       : Object.keys(groupConfig.options);
 
     items.forEach(item => {
@@ -479,7 +769,6 @@
     subContainer.classList.remove('hidden');
   });
 
-  // Handle Dynamic Sub-Subcategory Selection
   subSelect.addEventListener('change', (e) => {
     const selectedGroup = groupSelect.value;
     const selectedSub = e.target.value;
@@ -510,32 +799,31 @@
     }
   });
 
-  // Exercise Select Dropdown Autofill
+  /* ==========================================================================
+     7. PRESET SELECTION & AUTOFILL
+     ========================================================================== */
   function populateExerciseDropdown() {
-    exerciseSelect.innerHTML = '<option value="">-- Choose Existing or Type Below --</option>';
-    
-    // Sort Favorites first
+    exercisePresetSelect.innerHTML = '<option value="">-- Choose Existing or Type Below --</option>';
+
     const sorted = [...exercises].sort((a, b) => b.favorite - a.favorite);
 
     sorted.forEach(ex => {
       const opt = document.createElement('option');
       opt.value = ex.name;
       opt.textContent = `${ex.favorite ? '★ ' : ''}${ex.name}`;
-      exerciseSelect.appendChild(opt);
+      exercisePresetSelect.appendChild(opt);
     });
   }
 
-  exerciseSelect.addEventListener('change', (e) => {
+  exercisePresetSelect.addEventListener('change', (e) => {
     const found = exercises.find(ex => ex.name === e.target.value);
     if (found) {
       exerciseNameInput.value = found.name;
-      
-      // Auto-set tags
-      document.querySelectorAll('input[name="tags"]').forEach(cb => {
+
+      document.querySelectorAll('.tag-checkbox').forEach(cb => {
         cb.checked = found.tags ? found.tags.includes(cb.value) : false;
       });
 
-      // Auto-set group & dynamic subcategories
       if (found.group) {
         groupSelect.value = found.group;
         groupSelect.dispatchEvent(new Event('change'));
@@ -550,7 +838,6 @@
         }
       }
 
-      // Auto-fill previous weight/sets/reps from last log
       const lastLog = logs.find(l => l.exercise.toLowerCase() === found.name.toLowerCase());
       if (lastLog) {
         document.getElementById('weight').value = lastLog.weight;
@@ -560,12 +847,14 @@
     }
   });
 
-  // Form Submission
+  /* ==========================================================================
+     8. LOG FORM SUBMISSION
+     ========================================================================== */
   workoutForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const name = exerciseNameInput.value.trim();
-    const tags = Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(cb => cb.value);
+    const tags = Array.from(document.querySelectorAll('.tag-checkbox:checked')).map(cb => cb.value);
     const group = groupSelect.value;
     const sub = subSelect.value || null;
     const subSub = subSubSelect.value || null;
@@ -573,7 +862,6 @@
     const sets = parseInt(document.getElementById('sets').value);
     const reps = parseInt(document.getElementById('reps').value);
 
-    // Save or Update Exercise Preset
     let exObj = exercises.find(ex => ex.name.toLowerCase() === name.toLowerCase());
     if (!exObj) {
       exObj = { name, group, sub, subSub, tags, favorite: false };
@@ -586,7 +874,6 @@
     }
     localStorage.setItem('workout_exercises', JSON.stringify(exercises));
 
-    // Add Log Entry
     const newLog = {
       id: Date.now(),
       exercise: name,
@@ -604,7 +891,6 @@
     logs.unshift(newLog);
     localStorage.setItem('workout_logs', JSON.stringify(logs));
 
-    // Reset Form
     workoutForm.reset();
     subContainer.classList.add('hidden');
     subSubContainer.classList.add('hidden');
@@ -612,133 +898,165 @@
     alert('Workout Logged Successfully!');
   });
 
-  // Render History in PST
+  /* ==========================================================================
+     9. HISTORY RENDER & EDIT/DELETE LOGS
+     ========================================================================== */
   function renderHistory() {
-    const list = document.getElementById('log-list');
-    if (logs.length === 0) {
-      list.innerHTML = 'No workouts logged yet.';
+    const container = document.getElementById('log-list-container');
+    const query = document.getElementById('history-search').value.toLowerCase().trim();
+
+    const filtered = logs.filter(log => {
+      const matchName = log.exercise.toLowerCase().includes(query);
+      const matchGroup = log.group ? log.group.toLowerCase().includes(query) : false;
+      const matchTags = log.tags ? log.tags.some(t => t.toLowerCase().includes(query)) : false;
+      return matchName || matchGroup || matchTags;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No matching logs found.</p>';
       return;
     }
 
-    list.innerHTML = logs.map(log => {
-      // Format PST Time
-      const dateStr = new Date(log.timestamp).toLocaleString('en-US', {
-        timeZone: 'America/Los_Angeles',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-
-      return `
-        <div class="log-item">
-          <div class="log-info">
-            <strong>${log.exercise}</strong>
-            <div>
-              <span class="badge">${log.group}</span>
-              ${log.sub ? `<span class="badge">${log.sub}</span>` : ''}
-              ${log.subSub ? `<span class="badge">${log.subSub}</span>` : ''}
-              ${log.tags ? log.tags.map(t => `<span class="badge badge-tag">${t}</span>`).join('') : ''}
-            </div>
-            <small style="color: var(--text-muted); margin-top: 4px;">
-              ${log.weight > 0 ? log.weight + ' lbs | ' : ''}${log.sets} sets × ${log.reps} reps 
-              (${log.volume > 0 ? log.volume + ' lbs total' : 'Bodyweight'})
-            </small>
-            <small style="color: #6b7280; font-size: 0.75rem;">${dateStr} PST</small>
+    container.innerHTML = filtered.map(log => `
+      <div class="log-item">
+        <div class="log-details">
+          <h3>${log.exercise}</h3>
+          <div>
+            <span class="badge">${log.group}</span>
+            ${log.sub ? `<span class="badge">${log.sub}</span>` : ''}
+            ${log.subSub ? `<span class="badge">${log.subSub}</span>` : ''}
+            ${log.tags ? log.tags.map(t => `<span class="badge badge-tag">${t}</span>`).join('') : ''}
           </div>
-          <button class="btn-danger" onclick="deleteLog(${log.id})">Delete</button>
+          <div class="log-meta">
+            ${log.weight > 0 ? log.weight + ' lbs | ' : ''}${log.sets} sets × ${log.reps} reps 
+            (${log.volume > 0 ? log.volume + ' lbs total' : 'Bodyweight'})
+          </div>
+          <div class="log-timestamp">${formatPSTDate(log.timestamp)} PST</div>
         </div>
-      `;
-    }).join('');
+        <div class="log-actions">
+          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openEditModal(${log.id})">Edit</button>
+          <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
+        </div>
+      </div>
+    `).join('');
   }
 
   function deleteLog(id) {
-    if (confirm('Delete this log entry?')) {
+    if (confirm('Delete this workout entry?')) {
       logs = logs.filter(l => l.id !== id);
       localStorage.setItem('workout_logs', JSON.stringify(logs));
       renderHistory();
     }
   }
 
-  // Manage Exercises & Favorites
+  function openEditModal(id) {
+    const log = logs.find(l => l.id === id);
+    if (!log) return;
+
+    document.getElementById('edit-log-id').value = log.id;
+    document.getElementById('edit-exercise-name').value = log.exercise;
+    document.getElementById('edit-weight').value = log.weight;
+    document.getElementById('edit-sets').value = log.sets;
+    document.getElementById('edit-reps').value = log.reps;
+
+    document.getElementById('edit-modal').classList.remove('hidden');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+  }
+
+  function saveEditLog() {
+    const id = parseInt(document.getElementById('edit-log-id').value);
+    const log = logs.find(l => l.id === id);
+    if (!log) return;
+
+    log.exercise = document.getElementById('edit-exercise-name').value.trim();
+    log.weight = parseFloat(document.getElementById('edit-weight').value) || 0;
+    log.sets = parseInt(document.getElementById('edit-sets').value);
+    log.reps = parseInt(document.getElementById('edit-reps').value);
+    log.volume = log.weight * log.sets * log.reps;
+
+    localStorage.setItem('workout_logs', JSON.stringify(logs));
+    closeEditModal();
+    renderHistory();
+  }
+
+  /* ==========================================================================
+     10. EXERCISE MANAGER
+     ========================================================================== */
   function renderExerciseManager() {
-    const container = document.getElementById('exercise-manage-list');
+    const container = document.getElementById('exercise-manager-list');
     if (exercises.length === 0) {
-      container.innerHTML = 'No stored exercise presets.';
+      container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No exercise presets.</p>';
       return;
     }
 
-    container.innerHTML = exercises.map((ex, index) => `
-      <div class="exercise-list-item">
+    container.innerHTML = exercises.map((ex, idx) => `
+      <div class="exercise-mgr-item">
         <div>
-          <strong>${ex.name}</strong>
-          <br>
+          <strong>${ex.name}</strong><br>
           <small style="color: var(--text-muted);">${ex.group} ${ex.sub ? '• ' + ex.sub : ''}</small>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="fav-btn" onclick="toggleFav(${index})">${ex.favorite ? '★' : '☆'}</button>
-          <button class="btn-danger" onclick="deleteExercise(${index})">Remove</button>
+          <button class="fav-toggle ${ex.favorite ? 'active' : ''}" onclick="toggleFav(${idx})">★</button>
+          <button class="btn btn-danger" onclick="deletePreset(${idx})">Remove</button>
         </div>
       </div>
     `).join('');
   }
 
-  function toggleFav(index) {
-    exercises[index].favorite = !exercises[index].favorite;
+  function toggleFav(idx) {
+    exercises[idx].favorite = !exercises[idx].favorite;
     localStorage.setItem('workout_exercises', JSON.stringify(exercises));
     renderExerciseManager();
     populateExerciseDropdown();
   }
 
-  function deleteExercise(index) {
-    if (confirm(`Remove preset for "${exercises[index].name}"?`)) {
-      exercises.splice(index, 1);
+  function deletePreset(idx) {
+    if (confirm(`Delete preset for "${exercises[idx].name}"?`)) {
+      exercises.splice(idx, 1);
       localStorage.setItem('workout_exercises', JSON.stringify(exercises));
       renderExerciseManager();
       populateExerciseDropdown();
     }
   }
 
-  // Progress Charting (Chart.js)
-  function setupChartFilter() {
+  /* ==========================================================================
+     11. CHART.JS PROGRESS GRAPH
+     ========================================================================== */
+  function updateChart() {
     const filterSelect = document.getElementById('chart-filter');
+    const currentVal = filterSelect.value;
+
     filterSelect.innerHTML = '<option value="ALL">All Exercises (Total Volume)</option>';
-    
-    const uniqueExercises = [...new Set(logs.map(l => l.exercise))];
-    uniqueExercises.forEach(name => {
+    const unique = [...new Set(logs.map(l => l.exercise))];
+    unique.forEach(name => {
       const opt = document.createElement('option');
       opt.value = name;
       opt.textContent = name;
       filterSelect.appendChild(opt);
     });
-  }
+    filterSelect.value = currentVal;
 
-  document.getElementById('chart-filter').addEventListener('change', updateChart);
-
-  function updateChart() {
-    setupChartFilter();
-    const filter = document.getElementById('chart-filter').value;
+    const filter = filterSelect.value;
     const ctx = document.getElementById('volumeChart').getContext('2d');
 
-    const filteredLogs = filter === 'ALL' 
-      ? [...logs] 
-      : logs.filter(l => l.exercise === filter);
-
-    // Group logs by Date (PST)
+    const filteredLogs = filter === 'ALL' ? [...logs] : logs.filter(l => l.exercise === filter);
     const sorted = filteredLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    
+
     const dates = [];
     const volumes = [];
 
     sorted.forEach(log => {
       const d = new Date(log.timestamp).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'numeric', day: 'numeric' });
       const idx = dates.indexOf(d);
+      const vol = log.volume || (log.sets * log.reps);
       if (idx > -1) {
-        volumes[idx] += (log.volume || (log.sets * log.reps));
+        volumes[idx] += vol;
       } else {
         dates.push(d);
-        volumes.push(log.volume || (log.sets * log.reps));
+        volumes.push(vol);
       }
     });
 
@@ -749,7 +1067,7 @@
       data: {
         labels: dates,
         datasets: [{
-          label: filter === 'ALL' ? 'Total Volume (lbs / reps)' : `${filter} Volume`,
+          label: filter === 'ALL' ? 'Total Volume' : `${filter} Volume`,
           data: volumes,
           backgroundColor: '#3b82f6',
           borderRadius: 6
@@ -759,24 +1077,67 @@
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: '#374151' },
-            ticks: { color: '#9ca3af' }
-          },
-          x: {
-            grid: { color: '#374151' },
-            ticks: { color: '#9ca3af' }
-          }
+          y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
         },
         plugins: {
-          legend: { labels: { color: '#f3f4f6' } }
+          legend: { labels: { color: '#f8fafc' } }
         }
       }
     });
   }
 
-  // Initial Startup
+  document.getElementById('chart-filter').addEventListener('change', updateChart);
+
+  /* ==========================================================================
+     12. DATA EXPORT & IMPORT
+     ========================================================================== */
+  function exportDataJSON() {
+    const data = { logs, exercises };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `workout_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importDataJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (parsed.logs && parsed.exercises) {
+          logs = parsed.logs;
+          exercises = parsed.exercises;
+          localStorage.setItem('workout_logs', JSON.stringify(logs));
+          localStorage.setItem('workout_exercises', JSON.stringify(exercises));
+          populateExerciseDropdown();
+          alert('Data imported successfully!');
+        } else {
+          alert('Invalid backup file structure.');
+        }
+      } catch (err) {
+        alert('Failed to parse JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function clearAllData() {
+    if (confirm('Are you sure you want to delete ALL logged workouts and presets? This cannot be undone.')) {
+      localStorage.clear();
+      logs = [];
+      exercises = [];
+      location.reload();
+    }
+  }
+
+  // Initial Execution
   populateExerciseDropdown();
 </script>
 </body>
