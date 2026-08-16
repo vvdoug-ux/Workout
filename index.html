@@ -401,14 +401,19 @@
             "Chest", "Back", "Shoulders", "Arms", "Legs"
         ];
 
-        // Specific Muscles Options
-        const MUSCLES = [
-            "Biceps", "Triceps", "Brachialis", "Forearms", "Quads", "Hamstrings", 
-            "Adductors", "Glutes", "Gluteus Maximus", "Calves", "Lats", "Traps", 
-            "Rhomboids", "Pecs", "Pectoralis Major", "Pectoralis Minor", "Serratus Anterior", 
-            "Pec Major Upper", "Pec Major Middle", "Pec Major Lower", "Deltoids", 
-            "Anterior Deltoid", "Lateral Deltoid", "Posterior Deltoid", "Lower Back", 
-            "Abs", "Erector Spinae", "Multifidus", "Quadratus Lumborum", "Gluteus Medius", 
+        // Muscles (general) Options
+        const MUSCLES_GENERAL = [
+            "Biceps", "Triceps", "Forearms", "Quads", "Hamstrings", 
+            "Glutes", "Calves", "Lats", "Traps", "Rhomboids", 
+            "Pecs", "Deltoids", "Lower Back", "Abs"
+        ];
+
+        // Muscles (specific) Options
+        const MUSCLES_SPECIFIC = [
+            "Brachialis", "Adductors", "Gluteus Maximus", "Pectoralis Major", 
+            "Pectoralis Minor", "Serratus Anterior", "Pec Major Upper", "Pec Major Middle", 
+            "Pec Major Lower", "Anterior Deltoid", "Lateral Deltoid", "Posterior Deltoid", 
+            "Erector Spinae", "Multifidus", "Quadratus Lumborum", "Gluteus Medius", 
             "Gluteus Minimus", "Rectus Abdominus", "Transversus Abdominus", "Obliques", 
             "Internal Obliques", "External Obliques", "Abductors", "Soleus", "Gastrocnemius"
         ];
@@ -444,7 +449,7 @@
 
         // Read metadata without creating a new entry automatically
         function getMeta(exName) {
-            if (!exName) return { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
+            if (!exName) return { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [], musclesSpecific: [] };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
                 const m = exerciseMeta[key];
@@ -452,10 +457,11 @@
                     favorite: !!m.favorite,
                     equipment: m.equipment || [],
                     muscleGroups: m.muscleGroups || [],
-                    muscles: m.muscles || []
+                    musclesGeneral: m.musclesGeneral || m.muscles || [],
+                    musclesSpecific: m.musclesSpecific || []
                 };
             }
-            return { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
+            return { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [], musclesSpecific: [] };
         }
 
         // Explicitly create/get metadata only when saving
@@ -465,10 +471,11 @@
             if (key) {
                 if (!exerciseMeta[key].equipment) exerciseMeta[key].equipment = [];
                 if (!exerciseMeta[key].muscleGroups) exerciseMeta[key].muscleGroups = [];
-                if (!exerciseMeta[key].muscles) exerciseMeta[key].muscles = [];
+                if (!exerciseMeta[key].musclesGeneral) exerciseMeta[key].musclesGeneral = exerciseMeta[key].muscles || [];
+                if (!exerciseMeta[key].musclesSpecific) exerciseMeta[key].musclesSpecific = [];
                 return exerciseMeta[key];
             }
-            exerciseMeta[exName] = { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
+            exerciseMeta[exName] = { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [], musclesSpecific: [] };
             saveMeta();
             return exerciseMeta[exName];
         }
@@ -986,33 +993,61 @@
                 item.appendChild(mgLabel);
                 item.appendChild(mgChipsDiv);
 
-                // 3. Specific Muscles Selection Chips
-                const mLabel = document.createElement('label');
-                mLabel.textContent = 'Muscles:';
-                mLabel.style.marginTop = '10px';
+                // 3. Muscles (general) Selection Chips
+                const mgGenLabel = document.createElement('label');
+                mgGenLabel.textContent = 'Muscles (general):';
+                mgGenLabel.style.marginTop = '10px';
 
-                const mChipsDiv = document.createElement('div');
-                mChipsDiv.className = 'category-chips';
+                const mgGenChipsDiv = document.createElement('div');
+                mgGenChipsDiv.className = 'category-chips';
 
-                MUSCLES.forEach(itemOpt => {
+                MUSCLES_GENERAL.forEach(itemOpt => {
                     const chip = document.createElement('div');
-                    const isSelected = meta.muscles.includes(itemOpt);
+                    const isSelected = meta.musclesGeneral.includes(itemOpt);
                     chip.className = 'category-chip' + (isSelected ? ' selected' : '');
                     chip.textContent = itemOpt;
                     chip.onclick = () => {
                         if (isSelected) {
-                            meta.muscles = meta.muscles.filter(m => m !== itemOpt);
+                            meta.musclesGeneral = meta.musclesGeneral.filter(m => m !== itemOpt);
                         } else {
-                            meta.muscles.push(itemOpt);
+                            meta.musclesGeneral.push(itemOpt);
                         }
                         saveMeta();
                         renderSettingsList();
                     };
-                    mChipsDiv.appendChild(chip);
+                    mgGenChipsDiv.appendChild(chip);
                 });
 
-                item.appendChild(mLabel);
-                item.appendChild(mChipsDiv);
+                item.appendChild(mgGenLabel);
+                item.appendChild(mgGenChipsDiv);
+
+                // 4. Muscles (specific) Selection Chips
+                const mgSpecLabel = document.createElement('label');
+                mgSpecLabel.textContent = 'Muscles (specific):';
+                mgSpecLabel.style.marginTop = '10px';
+
+                const mgSpecChipsDiv = document.createElement('div');
+                mgSpecChipsDiv.className = 'category-chips';
+
+                MUSCLES_SPECIFIC.forEach(itemOpt => {
+                    const chip = document.createElement('div');
+                    const isSelected = meta.musclesSpecific.includes(itemOpt);
+                    chip.className = 'category-chip' + (isSelected ? ' selected' : '');
+                    chip.textContent = itemOpt;
+                    chip.onclick = () => {
+                        if (isSelected) {
+                            meta.musclesSpecific = meta.musclesSpecific.filter(m => m !== itemOpt);
+                        } else {
+                            meta.musclesSpecific.push(itemOpt);
+                        }
+                        saveMeta();
+                        renderSettingsList();
+                    };
+                    mgSpecChipsDiv.appendChild(chip);
+                });
+
+                item.appendChild(mgSpecLabel);
+                item.appendChild(mgSpecChipsDiv);
 
                 container.appendChild(item);
             });
@@ -1031,7 +1066,7 @@
                 exerciseMeta[newName] = exerciseMeta[key];
                 if (key !== newName) delete exerciseMeta[key];
             } else {
-                exerciseMeta[newName] = { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
+                exerciseMeta[newName] = { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [], musclesSpecific: [] };
             }
             saveMeta();
 
