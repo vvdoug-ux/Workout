@@ -90,19 +90,6 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Tag Pill Badges */
-        .tag-pill {
-            display: inline-block;
-            background: #e0f2fe;
-            color: #0369a1;
-            font-size: 0.75em;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 12px;
-            margin-right: 4px;
-            border: 1px solid #bae6fd;
-        }
-
         /* Favorite Star Button */
         .star-btn {
             background: transparent;
@@ -308,13 +295,6 @@
                         <input type="number" id="reps" onfocus="this.select()" required>
                     </div>
                 </div>
-
-                <!-- Added Tags Input Field -->
-                <div class="form-group">
-                    <label>Tags (optional, comma-separated)</label>
-                    <input type="text" id="tags" placeholder="e.g. warmup, PR, dropset">
-                </div>
-
                 <button type="submit">Save</button>
             </form>
         </div>
@@ -360,7 +340,6 @@
                     <th>Weight</th>
                     <th>Sets</th>
                     <th>Reps</th>
-                    <th>Tags</th>
                     <th></th>
                 </tr>
             </thead>
@@ -410,42 +389,33 @@
             return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
 
-        // All selectable categories sorted alphabetically
-        const CATEGORIES = ["Bodyweight", "Cardio", "Core", "Full Body", "Lower Body", "Upper Body"];
+        // Equipment Options
+        const EQUIPMENT = [
+            "Bodyweight", "Barbell", "Dumbbells", "Kettlebell", "Weight Plate", 
+            "Resistance Band", "Medicine Ball", "Weighted Vest", "Wrist Weight", "Ankle Weight"
+        ];
 
-        // Categories used specifically for grouping section headers in the Favorites view (Bodyweight excluded)
-        const FAVORITE_CATEGORIES = ["Cardio", "Core", "Full Body", "Lower Body", "Upper Body"];
+        // Muscle Groups Options
+        const MUSCLE_GROUPS = [
+            "Upper Body", "Lower Body", "Core", "Push", "Pull", 
+            "Chest", "Back", "Shoulders", "Arms", "Legs"
+        ];
 
-        // Subcategories organized by Category and sorted alphabetically
-        const SUBCATEGORIES = {
-            "Bodyweight": [],
-            "Cardio": [],
-            "Core": ["Abs", "Lower Back", "Obliques"],
-            "Full Body": [],
-            "Lower Body": ["Ad/Abductors", "Calves", "Glutes", "Hamstrings", "Quads"],
-            "Upper Body": ["Back", "Biceps", "Chest", "Forearms", "Shoulders", "Triceps"]
-        };
+        // Specific Muscles Options
+        const MUSCLES = [
+            "Biceps", "Triceps", "Brachialis", "Forearms", "Quads", "Hamstrings", 
+            "Adductors", "Glutes", "Gluteus Maximus", "Calves", "Lats", "Traps", 
+            "Rhomboids", "Pecs", "Pectoralis Major", "Pectoralis Minor", "Serratus Anterior", 
+            "Pec Major Upper", "Pec Major Middle", "Pec Major Lower", "Deltoids", 
+            "Anterior Deltoid", "Lateral Deltoid", "Posterior Deltoid", "Lower Back", 
+            "Abs", "Erector Spinae", "Multifidus", "Quadratus Lumborum", "Gluteus Medius", 
+            "Gluteus Minimus", "Rectus Abdominus", "Transversus Abdominus", "Obliques", 
+            "Internal Obliques", "External Obliques", "Abductors", "Soleus", "Gastrocnemius"
+        ];
 
         // Load existing data from browser storage
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
-        
-        // Auto-migrate legacy "Legs" category names stored in local storage to "Lower Body"
-        let metaUpdated = false;
-        Object.keys(exerciseMeta).forEach(key => {
-            if (exerciseMeta[key].categories) {
-                exerciseMeta[key].categories = exerciseMeta[key].categories.map(c => {
-                    if (c === "Legs") {
-                        metaUpdated = true;
-                        return "Lower Body";
-                    }
-                    return c;
-                });
-            }
-        });
-        if (metaUpdated) {
-            localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
-        }
 
         // Ensure every existing item has a unique ID for deletion & sorting
         workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
@@ -459,7 +429,6 @@
         const datalist = document.getElementById('exercise-history');
         const exerciseInput = document.getElementById('exercise');
         const weightInput = document.getElementById('weight');
-        const tagsInput = document.getElementById('tags');
         const starBtn = document.getElementById('star-btn');
 
         // Default date set to Pacific Time
@@ -469,17 +438,24 @@
         function resetLogForm() {
             form.reset();
             document.getElementById('date').value = getPacificDateString();
-            tagsInput.value = '';
             updateStarButton();
             updateWeightFieldState();
         }
 
         // Read metadata without creating a new entry automatically
         function getMeta(exName) {
-            if (!exName) return { favorite: false, categories: [], subcategories: [] };
+            if (!exName) return { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
-            if (key) return exerciseMeta[key];
-            return { favorite: false, categories: [], subcategories: [] };
+            if (key) {
+                const m = exerciseMeta[key];
+                return {
+                    favorite: !!m.favorite,
+                    equipment: m.equipment || [],
+                    muscleGroups: m.muscleGroups || [],
+                    muscles: m.muscles || []
+                };
+            }
+            return { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
         }
 
         // Explicitly create/get metadata only when saving
@@ -487,10 +463,12 @@
             if (!exName) return null;
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
-                if (!exerciseMeta[key].subcategories) exerciseMeta[key].subcategories = [];
+                if (!exerciseMeta[key].equipment) exerciseMeta[key].equipment = [];
+                if (!exerciseMeta[key].muscleGroups) exerciseMeta[key].muscleGroups = [];
+                if (!exerciseMeta[key].muscles) exerciseMeta[key].muscles = [];
                 return exerciseMeta[key];
             }
-            exerciseMeta[exName] = { favorite: false, categories: [], subcategories: [] };
+            exerciseMeta[exName] = { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
             saveMeta();
             return exerciseMeta[exName];
         }
@@ -538,12 +516,12 @@
             }
         }
 
-        // Check if current exercise is Bodyweight and toggle Weight field disabled state accordingly
+        // Check if current exercise uses Bodyweight equipment and toggle Weight field disabled state accordingly
         function updateWeightFieldState() {
             const val = exerciseInput.value.trim();
             const meta = getMeta(val);
 
-            if (val && meta.categories && meta.categories.includes("Bodyweight")) {
+            if (val && meta.equipment && meta.equipment.includes("Bodyweight")) {
                 weightInput.disabled = true;
                 weightInput.value = '0';
                 weightInput.required = false;
@@ -611,15 +589,9 @@
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
 
-            // Parse optional tags
-            const rawTags = tagsInput.value.trim();
-            const tags = rawTags 
-                ? rawTags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
-                : [];
-
             ensureMeta(exercise);
 
-            const newEntry = { id: Date.now(), date, exercise, weight, sets, reps, tags };
+            const newEntry = { id: Date.now(), date, exercise, weight, sets, reps };
             workouts.push(newEntry);
             localStorage.setItem('workouts', JSON.stringify(workouts));
             
@@ -660,30 +632,28 @@
 
             const todayStr = getPacificDateString();
 
-            // Map favorites by category
+            // Map favorites by Muscle Group
             const categorizedFavs = {};
-            FAVORITE_CATEGORIES.forEach(cat => categorizedFavs[cat] = []);
+            MUSCLE_GROUPS.forEach(mg => categorizedFavs[mg] = []);
             categorizedFavs["Uncategorized"] = [];
 
             favExercises.forEach(ex => {
                 const meta = getMeta(ex);
-                const activeFavCats = (meta.categories || [])
-                    .map(c => c === "Legs" ? "Lower Body" : c)
-                    .filter(c => FAVORITE_CATEGORIES.includes(c));
+                const activeFavGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
 
-                if (activeFavCats.length > 0) {
-                    [...new Set(activeFavCats)].forEach(cat => {
-                        categorizedFavs[cat].push(ex);
+                if (activeFavGroups.length > 0) {
+                    [...new Set(activeFavGroups)].forEach(mg => {
+                        categorizedFavs[mg].push(ex);
                     });
                 } else {
                     categorizedFavs["Uncategorized"].push(ex);
                 }
             });
 
-            const allCatKeys = [...FAVORITE_CATEGORIES, "Uncategorized"];
+            const allCatKeys = [...MUSCLE_GROUPS, "Uncategorized"];
 
-            allCatKeys.forEach(cat => {
-                const exercisesInCat = categorizedFavs[cat];
+            allCatKeys.forEach(mg => {
+                const exercisesInCat = categorizedFavs[mg];
                 if (exercisesInCat && exercisesInCat.length > 0) {
                     exercisesInCat.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
                     const uniqueEx = [...new Set(exercisesInCat)];
@@ -692,7 +662,7 @@
                     groupDiv.style.marginBottom = '14px';
 
                     const catHeader = document.createElement('div');
-                    catHeader.textContent = cat;
+                    catHeader.textContent = mg;
                     catHeader.style.fontSize = '0.8em';
                     catHeader.style.fontWeight = 'bold';
                     catHeader.style.color = '#64748b';
@@ -747,17 +717,12 @@
                 const tr = document.createElement('tr');
                 const displaySets = w.sets ? w.sets : '-';
                 
-                const tagBadges = (w.tags && w.tags.length > 0)
-                    ? w.tags.map(t => `<span class="tag-pill">#${t}</span>`).join('')
-                    : '-';
-
                 tr.innerHTML = `
                     <td>${w.date}</td>
                     <td>${w.exercise}</td>
                     <td>${w.weight}</td>
                     <td>${displaySets}</td>
                     <td>${w.reps}</td>
-                    <td>${tagBadges}</td>
                     <td><button class="delete-btn" onclick="deleteEntry(${w.id})">X</button></td>
                 `;
                 tbody.appendChild(tr);
@@ -817,7 +782,7 @@
             if (data.length === 0) return;
 
             const meta = getMeta(selectedEx);
-            const isBodyweight = meta.categories && meta.categories.includes("Bodyweight");
+            const isBodyweight = meta.equipment && meta.equipment.includes("Bodyweight");
 
             const dateTotals = {};
             data.forEach(w => {
@@ -915,7 +880,6 @@
 
             allExercises.forEach(ex => {
                 const meta = ensureMeta(ex);
-                if (!meta.subcategories) meta.subcategories = [];
 
                 const item = document.createElement('div');
                 item.className = 'setting-item';
@@ -961,75 +925,94 @@
                 topRow.appendChild(nameInput);
                 topRow.appendChild(favBtn);
                 topRow.appendChild(deleteBtn);
+                item.appendChild(topRow);
 
-                const catLabel = document.createElement('label');
-                catLabel.textContent = 'Categories:';
+                // 1. Equipment Selection Chips
+                const equipLabel = document.createElement('label');
+                equipLabel.textContent = 'Equipment:';
+                equipLabel.style.marginTop = '6px';
 
-                const chipsDiv = document.createElement('div');
-                chipsDiv.className = 'category-chips';
+                const equipChipsDiv = document.createElement('div');
+                equipChipsDiv.className = 'category-chips';
 
-                CATEGORIES.forEach(cat => {
+                EQUIPMENT.forEach(itemOpt => {
                     const chip = document.createElement('div');
-                    const isSelected = meta.categories.includes(cat);
+                    const isSelected = meta.equipment.includes(itemOpt);
                     chip.className = 'category-chip' + (isSelected ? ' selected' : '');
-                    chip.textContent = cat;
+                    chip.textContent = itemOpt;
                     chip.onclick = () => {
                         if (isSelected) {
-                            meta.categories = meta.categories.filter(c => c !== cat);
-                            const allowedSubs = SUBCATEGORIES[cat] || [];
-                            meta.subcategories = meta.subcategories.filter(s => !allowedSubs.includes(s));
+                            meta.equipment = meta.equipment.filter(e => e !== itemOpt);
                         } else {
-                            meta.categories.push(cat);
+                            meta.equipment.push(itemOpt);
                         }
                         saveMeta();
                         renderSettingsList();
                         updateFavoritesList();
                         updateWeightFieldState();
                     };
-                    chipsDiv.appendChild(chip);
+                    equipChipsDiv.appendChild(chip);
                 });
 
-                item.appendChild(topRow);
-                item.appendChild(catLabel);
-                item.appendChild(chipsDiv);
+                item.appendChild(equipLabel);
+                item.appendChild(equipChipsDiv);
 
-                const availableSubcats = [];
-                meta.categories.forEach(cat => {
-                    if (SUBCATEGORIES[cat]) {
-                        availableSubcats.push(...SUBCATEGORIES[cat]);
-                    }
+                // 2. Muscle Groups Selection Chips
+                const mgLabel = document.createElement('label');
+                mgLabel.textContent = 'Muscle Groups:';
+                mgLabel.style.marginTop = '10px';
+
+                const mgChipsDiv = document.createElement('div');
+                mgChipsDiv.className = 'category-chips';
+
+                MUSCLE_GROUPS.forEach(itemOpt => {
+                    const chip = document.createElement('div');
+                    const isSelected = meta.muscleGroups.includes(itemOpt);
+                    chip.className = 'category-chip' + (isSelected ? ' selected' : '');
+                    chip.textContent = itemOpt;
+                    chip.onclick = () => {
+                        if (isSelected) {
+                            meta.muscleGroups = meta.muscleGroups.filter(mg => mg !== itemOpt);
+                        } else {
+                            meta.muscleGroups.push(itemOpt);
+                        }
+                        saveMeta();
+                        renderSettingsList();
+                        updateFavoritesList();
+                    };
+                    mgChipsDiv.appendChild(chip);
                 });
 
-                if (availableSubcats.length > 0) {
-                    const sortedSubcats = [...new Set(availableSubcats)].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                item.appendChild(mgLabel);
+                item.appendChild(mgChipsDiv);
 
-                    const subCatLabel = document.createElement('label');
-                    subCatLabel.textContent = 'Subcategories:';
-                    subCatLabel.style.marginTop = '10px';
+                // 3. Specific Muscles Selection Chips
+                const mLabel = document.createElement('label');
+                mLabel.textContent = 'Muscles:';
+                mLabel.style.marginTop = '10px';
 
-                    const subChipsDiv = document.createElement('div');
-                    subChipsDiv.className = 'category-chips';
+                const mChipsDiv = document.createElement('div');
+                mChipsDiv.className = 'category-chips';
 
-                    sortedSubcats.forEach(sub => {
-                        const subChip = document.createElement('div');
-                        const isSubSelected = meta.subcategories.includes(sub);
-                        subChip.className = 'category-chip' + (isSubSelected ? ' selected' : '');
-                        subChip.textContent = sub;
-                        subChip.onclick = () => {
-                            if (isSubSelected) {
-                                meta.subcategories = meta.subcategories.filter(s => s !== sub);
-                            } else {
-                                meta.subcategories.push(sub);
-                            }
-                            saveMeta();
-                            renderSettingsList();
-                        };
-                        subChipsDiv.appendChild(subChip);
-                    });
+                MUSCLES.forEach(itemOpt => {
+                    const chip = document.createElement('div');
+                    const isSelected = meta.muscles.includes(itemOpt);
+                    chip.className = 'category-chip' + (isSelected ? ' selected' : '');
+                    chip.textContent = itemOpt;
+                    chip.onclick = () => {
+                        if (isSelected) {
+                            meta.muscles = meta.muscles.filter(m => m !== itemOpt);
+                        } else {
+                            meta.muscles.push(itemOpt);
+                        }
+                        saveMeta();
+                        renderSettingsList();
+                    };
+                    mChipsDiv.appendChild(chip);
+                });
 
-                    item.appendChild(subCatLabel);
-                    item.appendChild(subChipsDiv);
-                }
+                item.appendChild(mLabel);
+                item.appendChild(mChipsDiv);
 
                 container.appendChild(item);
             });
@@ -1048,7 +1031,7 @@
                 exerciseMeta[newName] = exerciseMeta[key];
                 if (key !== newName) delete exerciseMeta[key];
             } else {
-                exerciseMeta[newName] = { favorite: false, categories: [], subcategories: [] };
+                exerciseMeta[newName] = { favorite: false, equipment: [], muscleGroups: [], muscles: [] };
             }
             saveMeta();
 
