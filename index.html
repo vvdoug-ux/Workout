@@ -221,7 +221,7 @@
             margin-top: 6px;
         }
 
-        /* Category Tag Styles */
+        /* Category Tag Styles (Binary On/Off) */
         .category-chip {
             font-size: 0.8em;
             padding: 4px 8px;
@@ -234,28 +234,10 @@
             transition: all 0.15s ease;
         }
         
-        /* Binary equipment tag active OR Level 1 (Primary / Strong) tag */
-        .category-chip.selected,
-        .category-chip.level-primary {
+        .category-chip.selected {
             background: #2563eb;
             color: white;
             border-color: #2563eb;
-        }
-
-        /* Level 2 (Medium / Lesser Primary) tag */
-        .category-chip.level-medium {
-            background: #93c5fd;
-            color: #1e3a8a;
-            border-color: #60a5fa;
-            font-weight: 600;
-        }
-
-        /* Level 3 (Secondary / Weak) tag - new much lighter blue */
-        .category-chip.level-secondary {
-            background: #f0f7ff;
-            color: #2563eb;
-            border-color: #bfdbfe;
-            font-weight: 500;
         }
 
         .delete-btn {
@@ -411,71 +393,38 @@
             return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
 
-        // Tag Point & Level System Definitions (Invisible to user)
-        // Level 0: Off                      -> 0 points
-        // Level 1: Primary (Strong)         -> 3 points (usual blue)
-        // Level 2: Medium (Lesser Primary)  -> 2 points (medium light blue)
-        // Level 3: Secondary (Weak)         -> 1 point  (much lighter blue)
-        const TAG_POINTS = { 0: 0, 1: 3, 2: 2, 3: 1 };
-
-        function getTagLevel(tagMap, tagName) {
-            if (!tagMap) return 0;
-            return tagMap[tagName] || 0;
-        }
-
-        function getTagPoints(tagMap, tagName) {
-            const level = getTagLevel(tagMap, tagName);
-            return TAG_POINTS[level] || 0;
-        }
-
         // Equipment Options (Alphabetical, binary on/off)
         const EQUIPMENT = [
             "Ankle Weight", "Barbell", "Bodyweight", "Dumbbells", "Kettlebell", 
             "Machine", "Medicine Ball", "Resistance Band", "Weight Plate", "Weighted Vest", "Wrist Weight"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-        // Muscle Groups Options (Alphabetical)
+        // Muscle Groups Options (Alphabetical, binary on/off)
         const MUSCLE_GROUPS = [
             "Arms", "Back", "Chest", "Core", "Legs", 
             "Lower Body", "Pull", "Push", "Shoulders", "Upper Body"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-        // Muscles (general) Options (Alphabetical)
+        // Muscles (general) Options (Alphabetical, binary on/off)
         const MUSCLES_GENERAL = [
-            "Abs", "Biceps", "Calves", "Delts", "Forearms", 
-            "Glutes", "Hamstrings", "Hip Flexors", "Lats", "Lower Back", 
-            "Obliques", "Pecs", "Quads", "Rhomboids", "Rotator Cuffs", 
+            "Abs", "Biceps", "Calves", "Deltoids", "Forearms", 
+            "Glutes", "Hamstrings", "Lats", "Lower Back", 
+            "Obliques", "Pecs", "Quads", "Rhomboids", 
             "Traps", "Triceps"
-        ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-
-        // Muscles (specific) Options (Alphabetical)
-        const MUSCLES_SPECIFIC = [
-            "Abductors", "Adductors", "Anconeus", "Biceps Brachii (long)", "Biceps Brachii (short)", 
-            "Brachialis", "Brachioradialis", "Coracobrachialis", "Deltoid (anterior)", "Deltoid (lateral)", 
-            "Deltoid (posterior)", "Erector Spinae", "Forearm Extensors", "Forearm Flexors", "Gastrocnemius", 
-            "Gluteus Maximus", "Gluteus Medius", "Gluteus Minimus", "Iliacus", "Infraspinatus", 
-            "Latissimus Dorsi", "Levator Scapulae", "Multifidus", "Obliques (external)", "Obliques (internal)", 
-            "Pectoralis Major (lower)", "Pectoralis Major (middle)", "Pectoralis Major (upper)", "Pectoralis Minor", "Psoas (major)", 
-            "Quadratus Lumborum", "Rectus Abdominus", "Rectus Femoris", "Rhomboids (major)", "Rhomboids (minor)", 
-            "Sartorius", "Serratus Anterior", "Serratus Posterior (inferior)", "Serratus Posterior (superior)", "Soleus", 
-            "Subscapularis", "Supraspinatus", "Teres (major)", "Teres (minor)", "Transversus Abdominus", 
-            "Trapezius (lower)", "Trapezius (middle)", "Trapezius (upper)", "Triceps Brachii (lateral)", "Triceps Brachii (long)", 
-            "Triceps Brachii (medial)", "Vastus Intermedius", "Vastus Lateralis", "Vastus Medialis"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
         // Load existing data from browser storage
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
 
-        // Helper to normalize legacy array data into level-mapping objects
-        function normalizeTagMap(data) {
-            if (!data) return {};
-            if (Array.isArray(data)) {
-                const map = {};
-                data.forEach(item => { map[item] = 1; });
-                return map;
+        // Helper to normalize tag arrays for binary states
+        function normalizeArray(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (typeof data === 'object') {
+                return Object.keys(data).filter(k => data[k]);
             }
-            return data;
+            return [];
         }
 
         // Ensure every existing item has a unique ID for deletion & sorting
@@ -505,19 +454,18 @@
 
         // Read metadata without creating a new entry automatically
         function getMeta(exName) {
-            if (!exName) return { favorite: false, equipment: [], muscleGroups: {}, musclesGeneral: {}, musclesSpecific: {} };
+            if (!exName) return { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
                 const m = exerciseMeta[key];
                 return {
                     favorite: !!m.favorite,
                     equipment: m.equipment || [],
-                    muscleGroups: normalizeTagMap(m.muscleGroups),
-                    musclesGeneral: normalizeTagMap(m.musclesGeneral || m.muscles),
-                    musclesSpecific: normalizeTagMap(m.musclesSpecific)
+                    muscleGroups: normalizeArray(m.muscleGroups),
+                    musclesGeneral: normalizeArray(m.musclesGeneral || m.muscles)
                 };
             }
-            return { favorite: false, equipment: [], muscleGroups: {}, musclesGeneral: {}, musclesSpecific: {} };
+            return { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
         }
 
         // Explicitly create/get metadata only when saving
@@ -525,13 +473,13 @@
             if (!exName) return null;
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
-                if (!exerciseMeta[key].equipment) exerciseMeta[key].equipment = [];
-                exerciseMeta[key].muscleGroups = normalizeTagMap(exerciseMeta[key].muscleGroups);
-                exerciseMeta[key].musclesGeneral = normalizeTagMap(exerciseMeta[key].musclesGeneral || exerciseMeta[key].muscles);
-                exerciseMeta[key].musclesSpecific = normalizeTagMap(exerciseMeta[key].musclesSpecific);
+                exerciseMeta[key].equipment = exerciseMeta[key].equipment || [];
+                exerciseMeta[key].muscleGroups = normalizeArray(exerciseMeta[key].muscleGroups);
+                exerciseMeta[key].musclesGeneral = normalizeArray(exerciseMeta[key].musclesGeneral || exerciseMeta[key].muscles);
+                delete exerciseMeta[key].musclesSpecific;
                 return exerciseMeta[key];
             }
-            exerciseMeta[exName] = { favorite: false, equipment: [], muscleGroups: {}, musclesGeneral: {}, musclesSpecific: {} };
+            exerciseMeta[exName] = { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
             saveMeta();
             return exerciseMeta[exName];
         }
@@ -702,7 +650,7 @@
 
             favExercises.forEach(ex => {
                 const meta = getMeta(ex);
-                const activeFavGroups = Object.keys(meta.muscleGroups || {}).filter(mg => MUSCLE_GROUPS.includes(mg) && getTagLevel(meta.muscleGroups, mg) > 0);
+                const activeFavGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
 
                 if (activeFavGroups.length > 0) {
                     [...new Set(activeFavGroups)].forEach(mg => {
@@ -927,30 +875,17 @@
             }
         }
 
-        // Generic function to render 4-level tags (Off / L1 Primary [3pts] / L2 Medium [2pts] / L3 Secondary [1pt])
-        function renderMultiLevelCategoryChips(container, optionsList, tagMap, onUpdate) {
+        // Generic function to render binary category chips (On/Off)
+        function renderBinaryCategoryChips(container, optionsList, activeList, onToggle) {
             optionsList.forEach(itemOpt => {
                 const chip = document.createElement('div');
-                const level = getTagLevel(tagMap, itemOpt);
+                const isSelected = activeList.includes(itemOpt);
 
-                let levelClass = '';
-                if (level === 1) levelClass = ' level-primary';
-                else if (level === 2) levelClass = ' level-medium';
-                else if (level === 3) levelClass = ' level-secondary';
-
-                chip.className = 'category-chip' + levelClass;
+                chip.className = 'category-chip' + (isSelected ? ' selected' : '');
                 chip.textContent = itemOpt;
 
                 chip.onclick = () => {
-                    // Cycle: 0 (Off) -> 1 (Primary / 3pts) -> 2 (Medium / 2pts) -> 3 (Secondary / 1pt) -> 0 (Off)
-                    const nextLevel = (level + 1) % 4;
-                    if (nextLevel === 0) {
-                        delete tagMap[itemOpt];
-                    } else {
-                        tagMap[itemOpt] = nextLevel;
-                    }
-                    saveMeta();
-                    onUpdate();
+                    onToggle(itemOpt, isSelected);
                 };
 
                 container.appendChild(chip);
@@ -1020,7 +955,7 @@
                 topRow.appendChild(deleteBtn);
                 item.appendChild(topRow);
 
-                // 1. Equipment Selection Chips (Binary On/Off)
+                // 1. Equipment Selection Chips
                 const equipLabel = document.createElement('label');
                 equipLabel.textContent = 'Equipment:';
                 equipLabel.style.marginTop = '6px';
@@ -1028,29 +963,22 @@
                 const equipChipsDiv = document.createElement('div');
                 equipChipsDiv.className = 'category-chips';
 
-                EQUIPMENT.forEach(itemOpt => {
-                    const chip = document.createElement('div');
-                    const isSelected = meta.equipment.includes(itemOpt);
-                    chip.className = 'category-chip' + (isSelected ? ' selected' : '');
-                    chip.textContent = itemOpt;
-                    chip.onclick = () => {
-                        if (isSelected) {
-                            meta.equipment = meta.equipment.filter(e => e !== itemOpt);
-                        } else {
-                            meta.equipment.push(itemOpt);
-                        }
-                        saveMeta();
-                        renderSettingsList();
-                        updateFavoritesList();
-                        updateWeightFieldState();
-                    };
-                    equipChipsDiv.appendChild(chip);
+                renderBinaryCategoryChips(equipChipsDiv, EQUIPMENT, meta.equipment, (itemOpt, isSelected) => {
+                    if (isSelected) {
+                        meta.equipment = meta.equipment.filter(e => e !== itemOpt);
+                    } else {
+                        meta.equipment.push(itemOpt);
+                    }
+                    saveMeta();
+                    renderSettingsList();
+                    updateFavoritesList();
+                    updateWeightFieldState();
                 });
 
                 item.appendChild(equipLabel);
                 item.appendChild(equipChipsDiv);
 
-                // 2. Muscle Groups Selection Chips (4-level system)
+                // 2. Muscle Groups Selection Chips
                 const mgLabel = document.createElement('label');
                 mgLabel.textContent = 'Muscle Groups:';
                 mgLabel.style.marginTop = '10px';
@@ -1058,7 +986,13 @@
                 const mgChipsDiv = document.createElement('div');
                 mgChipsDiv.className = 'category-chips';
 
-                renderMultiLevelCategoryChips(mgChipsDiv, MUSCLE_GROUPS, meta.muscleGroups, () => {
+                renderBinaryCategoryChips(mgChipsDiv, MUSCLE_GROUPS, meta.muscleGroups, (itemOpt, isSelected) => {
+                    if (isSelected) {
+                        meta.muscleGroups = meta.muscleGroups.filter(m => m !== itemOpt);
+                    } else {
+                        meta.muscleGroups.push(itemOpt);
+                    }
+                    saveMeta();
                     renderSettingsList();
                     updateFavoritesList();
                 });
@@ -1066,7 +1000,7 @@
                 item.appendChild(mgLabel);
                 item.appendChild(mgChipsDiv);
 
-                // 3. Muscles (general) Selection Chips (4-level system)
+                // 3. Muscles (general) Selection Chips
                 const mgGenLabel = document.createElement('label');
                 mgGenLabel.textContent = 'Muscles (general):';
                 mgGenLabel.style.marginTop = '10px';
@@ -1074,27 +1008,18 @@
                 const mgGenChipsDiv = document.createElement('div');
                 mgGenChipsDiv.className = 'category-chips';
 
-                renderMultiLevelCategoryChips(mgGenChipsDiv, MUSCLES_GENERAL, meta.musclesGeneral, () => {
+                renderBinaryCategoryChips(mgGenChipsDiv, MUSCLES_GENERAL, meta.musclesGeneral, (itemOpt, isSelected) => {
+                    if (isSelected) {
+                        meta.musclesGeneral = meta.musclesGeneral.filter(m => m !== itemOpt);
+                    } else {
+                        meta.musclesGeneral.push(itemOpt);
+                    }
+                    saveMeta();
                     renderSettingsList();
                 });
 
                 item.appendChild(mgGenLabel);
                 item.appendChild(mgGenChipsDiv);
-
-                // 4. Muscles (specific) Selection Chips (4-level system)
-                const mgSpecLabel = document.createElement('label');
-                mgSpecLabel.textContent = 'Muscles (specific):';
-                mgSpecLabel.style.marginTop = '10px';
-
-                const mgSpecChipsDiv = document.createElement('div');
-                mgSpecChipsDiv.className = 'category-chips';
-
-                renderMultiLevelCategoryChips(mgSpecChipsDiv, MUSCLES_SPECIFIC, meta.musclesSpecific, () => {
-                    renderSettingsList();
-                });
-
-                item.appendChild(mgSpecLabel);
-                item.appendChild(mgSpecChipsDiv);
 
                 container.appendChild(item);
             });
@@ -1113,7 +1038,7 @@
                 exerciseMeta[newName] = exerciseMeta[key];
                 if (key !== newName) delete exerciseMeta[key];
             } else {
-                exerciseMeta[newName] = { favorite: false, equipment: [], muscleGroups: {}, musclesGeneral: {}, musclesSpecific: {} };
+                exerciseMeta[newName] = { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
             }
             saveMeta();
 
