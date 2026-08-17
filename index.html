@@ -234,7 +234,7 @@
             transition: all 0.15s ease;
         }
         
-        /* Binary equipment tag active OR Level 1 (Primary/Strong) tag */
+        /* Binary equipment tag active OR Level 1 (Primary / Strong) tag */
         .category-chip.selected,
         .category-chip.level-primary {
             background: #2563eb;
@@ -242,12 +242,20 @@
             border-color: #2563eb;
         }
 
-        /* Level 2 (Secondary/Weak) tag */
-        .category-chip.level-secondary {
+        /* Level 2 (Medium / Lesser Primary) tag */
+        .category-chip.level-medium {
             background: #93c5fd;
             color: #1e3a8a;
             border-color: #60a5fa;
             font-weight: 600;
+        }
+
+        /* Level 3 (Secondary / Weak) tag - new much lighter blue */
+        .category-chip.level-secondary {
+            background: #f0f7ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
+            font-weight: 500;
         }
 
         .delete-btn {
@@ -404,10 +412,11 @@
         }
 
         // Tag Point & Level System Definitions (Invisible to user)
-        // Level 0: Off       -> 0 points
-        // Level 1: Primary   -> 3 points (usual blue color)
-        // Level 2: Secondary -> 1 point  (light blue color)
-        const TAG_POINTS = { 0: 0, 1: 3, 2: 1 };
+        // Level 0: Off                      -> 0 points
+        // Level 1: Primary (Strong)         -> 3 points (usual blue)
+        // Level 2: Medium (Lesser Primary)  -> 2 points (medium light blue)
+        // Level 3: Secondary (Weak)         -> 1 point  (much lighter blue)
+        const TAG_POINTS = { 0: 0, 1: 3, 2: 2, 3: 1 };
 
         function getTagLevel(tagMap, tagName) {
             if (!tagMap) return 0;
@@ -918,22 +927,23 @@
             }
         }
 
-        // Generic function to render 3-level tags (Off / Level 1 Primary [3pts] / Level 2 Secondary [1pt])
-        function render3LevelCategoryChips(container, optionsList, tagMap, onUpdate) {
+        // Generic function to render 4-level tags (Off / L1 Primary [3pts] / L2 Medium [2pts] / L3 Secondary [1pt])
+        function renderMultiLevelCategoryChips(container, optionsList, tagMap, onUpdate) {
             optionsList.forEach(itemOpt => {
                 const chip = document.createElement('div');
                 const level = getTagLevel(tagMap, itemOpt);
 
                 let levelClass = '';
                 if (level === 1) levelClass = ' level-primary';
-                else if (level === 2) levelClass = ' level-secondary';
+                else if (level === 2) levelClass = ' level-medium';
+                else if (level === 3) levelClass = ' level-secondary';
 
                 chip.className = 'category-chip' + levelClass;
                 chip.textContent = itemOpt;
 
                 chip.onclick = () => {
-                    // Cycle: 0 (Off) -> 1 (Primary / 3pts) -> 2 (Secondary / 1pt) -> 0 (Off)
-                    const nextLevel = (level + 1) % 3;
+                    // Cycle: 0 (Off) -> 1 (Primary / 3pts) -> 2 (Medium / 2pts) -> 3 (Secondary / 1pt) -> 0 (Off)
+                    const nextLevel = (level + 1) % 4;
                     if (nextLevel === 0) {
                         delete tagMap[itemOpt];
                     } else {
@@ -1040,7 +1050,7 @@
                 item.appendChild(equipLabel);
                 item.appendChild(equipChipsDiv);
 
-                // 2. Muscle Groups Selection Chips (3-level system)
+                // 2. Muscle Groups Selection Chips (4-level system)
                 const mgLabel = document.createElement('label');
                 mgLabel.textContent = 'Muscle Groups:';
                 mgLabel.style.marginTop = '10px';
@@ -1048,7 +1058,7 @@
                 const mgChipsDiv = document.createElement('div');
                 mgChipsDiv.className = 'category-chips';
 
-                render3LevelCategoryChips(mgChipsDiv, MUSCLE_GROUPS, meta.muscleGroups, () => {
+                renderMultiLevelCategoryChips(mgChipsDiv, MUSCLE_GROUPS, meta.muscleGroups, () => {
                     renderSettingsList();
                     updateFavoritesList();
                 });
@@ -1056,7 +1066,7 @@
                 item.appendChild(mgLabel);
                 item.appendChild(mgChipsDiv);
 
-                // 3. Muscles (general) Selection Chips (3-level system)
+                // 3. Muscles (general) Selection Chips (4-level system)
                 const mgGenLabel = document.createElement('label');
                 mgGenLabel.textContent = 'Muscles (general):';
                 mgGenLabel.style.marginTop = '10px';
@@ -1064,14 +1074,14 @@
                 const mgGenChipsDiv = document.createElement('div');
                 mgGenChipsDiv.className = 'category-chips';
 
-                render3LevelCategoryChips(mgGenChipsDiv, MUSCLES_GENERAL, meta.musclesGeneral, () => {
+                renderMultiLevelCategoryChips(mgGenChipsDiv, MUSCLES_GENERAL, meta.musclesGeneral, () => {
                     renderSettingsList();
                 });
 
                 item.appendChild(mgGenLabel);
                 item.appendChild(mgGenChipsDiv);
 
-                // 4. Muscles (specific) Selection Chips (3-level system)
+                // 4. Muscles (specific) Selection Chips (4-level system)
                 const mgSpecLabel = document.createElement('label');
                 mgSpecLabel.textContent = 'Muscles (specific):';
                 mgSpecLabel.style.marginTop = '10px';
@@ -1079,7 +1089,7 @@
                 const mgSpecChipsDiv = document.createElement('div');
                 mgSpecChipsDiv.className = 'category-chips';
 
-                render3LevelCategoryChips(mgSpecChipsDiv, MUSCLES_SPECIFIC, meta.musclesSpecific, () => {
+                renderMultiLevelCategoryChips(mgSpecChipsDiv, MUSCLES_SPECIFIC, meta.musclesSpecific, () => {
                     renderSettingsList();
                 });
 
