@@ -23,7 +23,7 @@
             justify-content: space-between;
             gap: 8px;
             margin-bottom: 20px;
-            height: 42px; /* Fixed height for header buttons */
+            height: 42px;
         }
         
         .tab-btn {
@@ -48,10 +48,9 @@
         .tab-btn:hover { background: #cbd5e1; }
         .tab-btn.active { background: #2563eb; color: white; }
 
-        /* Square Settings Wheel Button */
         .settings-tab-btn {
             flex: none;
-            width: 42px; /* Same width as height */
+            width: 42px;
             font-size: 1.1em;
             padding: 0;
         }
@@ -90,10 +89,37 @@
         }
         button:hover { background: #1d4ed8; }
 
+        /* Equipment Tag Selector in Log Section */
+        .equip-select-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .equip-btn {
+            flex: 1;
+            padding: 8px 10px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            margin-top: 0;
+        }
+        .equip-btn:hover { background: #e2e8f0; }
+        .equip-btn.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
         /* Favorite Star Button */
         .star-btn {
             background: transparent;
-            color: #cbd5e1; /* Light gray star by default */
+            color: #cbd5e1;
             border: none;
             padding: 6px;
             border-radius: 4px;
@@ -107,16 +133,12 @@
             font-weight: bold;
             transition: color 0.2s;
         }
-        .star-btn:hover {
-            color: #94a3b8;
-        }
+        .star-btn:hover { color: #94a3b8; }
         .star-btn.active {
             background: transparent;
-            color: #eab308; /* Yellow star when active */
+            color: #eab308;
         }
-        .star-btn.active:hover {
-            color: #ca8a04;
-        }
+        .star-btn.active:hover { color: #ca8a04; }
 
         /* Favorites Quick Selection Section */
         .favorites-grid {
@@ -141,7 +163,6 @@
         }
         .fav-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
         
-        /* Faded state for exercises already logged today */
         .fav-btn.logged {
             opacity: 0.45;
             background: #e2e8f0;
@@ -192,7 +213,6 @@
             padding: 0 5px;
         }
 
-        /* Add Exercise Container in Settings */
         .add-exercise-box {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -221,7 +241,6 @@
             margin-top: 6px;
         }
 
-        /* Category Tag Styles (Binary On/Off) */
         .category-chip {
             font-size: 0.8em;
             padding: 4px 8px;
@@ -240,6 +259,11 @@
             border-color: #2563eb;
         }
 
+        .category-chip.disabled-chip {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
         .delete-btn {
             background: #ef4444;
             color: white;
@@ -253,6 +277,19 @@
             font-weight: bold;
         }
         .delete-btn:hover { background: #dc2626; }
+        .delete-btn.disabled-btn {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        .delete-btn.disabled-btn:hover { background: #cbd5e1; }
+
+        .lock-badge {
+            font-size: 0.8em;
+            color: #64748b;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
         canvas { max-width: 100%; margin-top: 20px; }
@@ -285,6 +322,14 @@
                     </div>
                     <datalist id="exercise-history"></datalist>
                 </div>
+
+                <!-- Unlabeled Equipment Tag Buttons -->
+                <div class="equip-select-group">
+                    <button type="button" class="equip-btn" data-equip="Bodyweight" onclick="setFormEquipment('Bodyweight')">Bodyweight</button>
+                    <button type="button" class="equip-btn" data-equip="Barbell" onclick="setFormEquipment('Barbell')">Barbell</button>
+                    <button type="button" class="equip-btn" data-equip="Dumbbells" onclick="setFormEquipment('Dumbbells')">Dumbbells</button>
+                </div>
+
                 <div class="form-group" style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>Weight</label>
@@ -373,39 +418,25 @@
     </div>
 
     <script>
-        // Helper function to get current date in Pacific Time (America/Los_Angeles)
         function getPacificDateString() {
             return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
 
-        // Helper function to calculate start date threshold based on timeframe option
         function getCutoffDateString(timeframe) {
             if (timeframe === 'max') return null;
-            
             const d = new Date();
-            if (timeframe === 'week') {
-                d.setDate(d.getDate() - 7);
-            } else if (timeframe === 'month') {
-                d.setMonth(d.getMonth() - 1);
-            } else if (timeframe === 'year') {
-                d.setFullYear(d.getFullYear() - 1);
-            }
+            if (timeframe === 'week') d.setDate(d.getDate() - 7);
+            else if (timeframe === 'month') d.setMonth(d.getMonth() - 1);
+            else if (timeframe === 'year') d.setFullYear(d.getFullYear() - 1);
             return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
 
-        // Equipment Options (Alphabetical, binary on/off)
-        const EQUIPMENT = [
-            "Ankle Weight", "Barbell", "Bodyweight", "Dumbbells", "Kettlebell", 
-            "Machine", "Medicine Ball", "Resistance Band", "Weight Plate", "Weighted Vest", "Wrist Weight"
-        ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-
-        // Muscle Groups Options (Alphabetical, binary on/off)
+        // Available Muscle Options
         const MUSCLE_GROUPS = [
             "Arms", "Back", "Chest", "Core", "Legs", 
             "Lower Body", "Pull", "Push", "Shoulders", "Upper Body"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-        // Muscles (general) Options (Alphabetical, binary on/off)
         const MUSCLES_GENERAL = [
             "Abs", "Biceps", "Calves", "Deltoids", "Forearms", 
             "Glutes", "Hamstrings", "Lats", "Lower Back", 
@@ -413,25 +444,84 @@
             "Traps", "Triceps"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
+        // Pre-populated default locked exercises definitions
+        const PRESET_EXERCISES = {
+            "Push-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
+            "Pull-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Lats"], isLocked: true },
+            "Bench Press": { defaultEquipment: "Barbell", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
+            "Overhead Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Bicep Curls": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Pull"], musclesGeneral: ["Biceps"], isLocked: true },
+            "Tricep Extensions": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
+            "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Legs"], musclesGeneral: ["Quads"], isLocked: true },
+            "Dips": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Arms"], musclesGeneral: ["Triceps"], isLocked: true },
+            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Pull"], musclesGeneral: [], isLocked: true },
+            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: [], isLocked: true },
+            "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids", "Traps"], isLocked: true },
+            "Shrugs": { defaultEquipment: "Barbell", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Traps"], isLocked: true },
+            "Farmer Carries": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms"], musclesGeneral: ["Forearms"], isLocked: true },
+            "Upright Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Traps"], isLocked: true },
+            "Pullover": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Lats"], isLocked: true },
+            "Crunches": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Side Crunches": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
+            "Plank": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Side Plank": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
+            "Floor Leg Raises": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Superman": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Lower Back"], isLocked: true },
+            "Glute Bridge": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Glutes"], isLocked: true },
+            "Lunges": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true },
+            "Calf Raises": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Calves"], isLocked: true },
+            "Nordic Hamstring Curls": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true },
+            "Floor Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
+            "Reverse Plank": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Hanging Leg Raises": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Bird Dogs": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Lower Back"], isLocked: true },
+            "Russian Twists": { defaultEquipment: "Dumbbells", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
+            "Romanian Deadlifts": { defaultEquipment: "Barbell", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true }
+        };
+
         // Load existing data from browser storage
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
 
-        // Helper to normalize tag arrays for binary states
         function normalizeArray(data) {
             if (!data) return [];
             if (Array.isArray(data)) return data;
-            if (typeof data === 'object') {
-                return Object.keys(data).filter(k => data[k]);
-            }
+            if (typeof data === 'object') return Object.keys(data).filter(k => data[k]);
             return [];
         }
 
-        // Ensure every existing item has a unique ID for deletion & sorting
+        // Initialize preset metadata, maintaining locked tags & names
+        function initPresetMetadata() {
+            Object.keys(PRESET_EXERCISES).forEach(exName => {
+                const preset = PRESET_EXERCISES[exName];
+                const existingKey = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+                
+                if (existingKey) {
+                    exerciseMeta[existingKey].isLocked = true;
+                    exerciseMeta[existingKey].defaultEquipment = preset.defaultEquipment;
+                    exerciseMeta[existingKey].muscleGroups = [...preset.muscleGroups];
+                    exerciseMeta[existingKey].musclesGeneral = [...preset.musclesGeneral];
+                } else {
+                    exerciseMeta[exName] = {
+                        favorite: false,
+                        defaultEquipment: preset.defaultEquipment,
+                        muscleGroups: [...preset.muscleGroups],
+                        musclesGeneral: [...preset.musclesGeneral],
+                        isLocked: true
+                    };
+                }
+            });
+            saveMeta();
+        }
+
+        initPresetMetadata();
+
         workouts = workouts.map(w => w.id ? w : { ...w, id: Date.now() + Math.random() });
         localStorage.setItem('workouts', JSON.stringify(workouts));
 
         let chartInstance = null;
+        let selectedFormEquipment = "Bodyweight";
 
         const form = document.getElementById('workout-form');
         const filter = document.getElementById('chart-filter');
@@ -441,45 +531,55 @@
         const weightInput = document.getElementById('weight');
         const starBtn = document.getElementById('star-btn');
 
-        // Default date set to Pacific Time
         document.getElementById('date').value = getPacificDateString();
 
-        // Resets all form fields in the Log Exercise section
-        function resetLogForm() {
-            form.reset();
-            document.getElementById('date').value = getPacificDateString();
-            updateStarButton();
+        function setFormEquipment(equipTag) {
+            selectedFormEquipment = equipTag || "Bodyweight";
+            
+            document.querySelectorAll('.equip-btn').forEach(btn => {
+                if (btn.dataset.equip === selectedFormEquipment) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
             updateWeightFieldState();
         }
 
-        // Read metadata without creating a new entry automatically
+        function resetLogForm() {
+            form.reset();
+            document.getElementById('date').value = getPacificDateString();
+            setFormEquipment("Bodyweight");
+            updateStarButton();
+        }
+
         function getMeta(exName) {
-            if (!exName) return { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
+            if (!exName) return { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], isLocked: false };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
                 const m = exerciseMeta[key];
                 return {
                     favorite: !!m.favorite,
-                    equipment: m.equipment || [],
+                    defaultEquipment: m.defaultEquipment || "Bodyweight",
                     muscleGroups: normalizeArray(m.muscleGroups),
-                    musclesGeneral: normalizeArray(m.musclesGeneral || m.muscles)
+                    musclesGeneral: normalizeArray(m.musclesGeneral || m.muscles),
+                    isLocked: !!m.isLocked || !!PRESET_EXERCISES[key]
                 };
             }
-            return { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
+            return { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], isLocked: false };
         }
 
-        // Explicitly create/get metadata only when saving
         function ensureMeta(exName) {
             if (!exName) return null;
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
             if (key) {
-                exerciseMeta[key].equipment = exerciseMeta[key].equipment || [];
                 exerciseMeta[key].muscleGroups = normalizeArray(exerciseMeta[key].muscleGroups);
                 exerciseMeta[key].musclesGeneral = normalizeArray(exerciseMeta[key].musclesGeneral || exerciseMeta[key].muscles);
-                delete exerciseMeta[key].musclesSpecific;
+                if (!exerciseMeta[key].defaultEquipment) exerciseMeta[key].defaultEquipment = "Bodyweight";
                 return exerciseMeta[key];
             }
-            exerciseMeta[exName] = { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
+            exerciseMeta[exName] = { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], isLocked: false };
             saveMeta();
             return exerciseMeta[exName];
         }
@@ -488,7 +588,6 @@
             localStorage.setItem('exerciseMeta', JSON.stringify(exerciseMeta));
         }
 
-        // Switch between tabs
         function switchTab(tabName) {
             if (tabName !== 'log') {
                 resetLogForm();
@@ -512,7 +611,7 @@
             }
         }
 
-        // Autofill Weight, Sets, and Reps from the most recent entry
+        // Autofill log data & pre-select recent/default Equipment tag
         function autofillExerciseData(exName) {
             if (!exName) return;
             const matching = workouts.filter(w => w.exercise.toLowerCase() === exName.toLowerCase());
@@ -523,16 +622,17 @@
                     weightInput.value = newest.weight;
                     document.getElementById('sets').value = newest.sets ? newest.sets : '';
                     document.getElementById('reps').value = newest.reps;
+                    setFormEquipment(newest.equipment || getMeta(exName).defaultEquipment);
+                    return;
                 }
             }
+
+            const meta = getMeta(exName);
+            setFormEquipment(meta.defaultEquipment);
         }
 
-        // Check if current exercise uses Bodyweight equipment and toggle Weight field disabled state accordingly
         function updateWeightFieldState() {
-            const val = exerciseInput.value.trim();
-            const meta = getMeta(val);
-
-            if (val && meta.equipment && meta.equipment.includes("Bodyweight")) {
+            if (selectedFormEquipment === "Bodyweight") {
                 weightInput.disabled = true;
                 weightInput.value = '0';
                 weightInput.required = false;
@@ -548,7 +648,6 @@
             }
         }
 
-        // Update star favorite button state next to exercise input
         function updateStarButton() {
             const val = exerciseInput.value.trim();
             starBtn.textContent = '★';
@@ -577,7 +676,6 @@
             updateUI();
         }
 
-        // Handle exercise input change & clear fields when empty
         exerciseInput.addEventListener('input', () => {
             const val = exerciseInput.value.trim();
             if (val) {
@@ -586,12 +684,11 @@
                 weightInput.value = '';
                 document.getElementById('sets').value = '';
                 document.getElementById('reps').value = '';
+                setFormEquipment("Bodyweight");
             }
             updateStarButton();
-            updateWeightFieldState();
         });
 
-        // Handle form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const date = document.getElementById('date').value;
@@ -602,7 +699,16 @@
 
             ensureMeta(exercise);
 
-            const newEntry = { id: Date.now(), date, exercise, weight, sets, reps };
+            const newEntry = { 
+                id: Date.now(), 
+                date, 
+                exercise, 
+                equipment: selectedFormEquipment, 
+                weight, 
+                sets, 
+                reps 
+            };
+
             workouts.push(newEntry);
             localStorage.setItem('workouts', JSON.stringify(workouts));
             
@@ -621,12 +727,10 @@
             }
         }
 
-        // Select Favorite & Smooth Scroll to Top
         function selectFavorite(exName) {
             exerciseInput.value = exName;
             autofillExerciseData(exName);
             updateStarButton();
-            updateWeightFieldState();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -643,7 +747,6 @@
 
             const todayStr = getPacificDateString();
 
-            // Map favorites by Muscle Group
             const categorizedFavs = {};
             MUSCLE_GROUPS.forEach(mg => categorizedFavs[mg] = []);
             categorizedFavs["Uncategorized"] = [];
@@ -717,7 +820,6 @@
             updateChart();
         }
 
-        // Render History Table (Most recently added entry appears first)
         function updateTable() {
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
@@ -793,10 +895,10 @@
             if (data.length === 0) return;
 
             const meta = getMeta(selectedEx);
-            const isBodyweight = meta.equipment && meta.equipment.includes("Bodyweight");
 
             const dateTotals = {};
             data.forEach(w => {
+                const isBodyweight = (w.equipment ? w.equipment === "Bodyweight" : meta.defaultEquipment === "Bodyweight");
                 const numSets = w.sets ? w.sets : 1;
                 const volume = isBodyweight ? (numSets * w.reps) : (w.weight * numSets * w.reps);
                 
@@ -810,7 +912,9 @@
             const dates = Object.keys(dateTotals).sort((a, b) => new Date(a) - new Date(b));
             const totalVolumes = dates.map(d => dateTotals[d]);
 
-            const yAxisLabel = isBodyweight ? 'Total Volume' : 'Total Weight';
+            const latestLogEquip = data[data.length - 1].equipment || meta.defaultEquipment;
+            const isBodyweightChart = (latestLogEquip === "Bodyweight");
+            const yAxisLabel = isBodyweightChart ? 'Total Volume' : 'Total Weight';
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
@@ -832,7 +936,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return isBodyweight 
+                                    return isBodyweightChart 
                                         ? `Total Volume: ${context.parsed.y} reps` 
                                         : `Total Weight: ${context.parsed.y} lbs/kg`;
                                 }
@@ -875,18 +979,19 @@
             }
         }
 
-        // Generic function to render binary category chips (On/Off)
-        function renderBinaryCategoryChips(container, optionsList, activeList, onToggle) {
+        function renderBinaryCategoryChips(container, optionsList, activeList, isLocked, onToggle) {
             optionsList.forEach(itemOpt => {
                 const chip = document.createElement('div');
                 const isSelected = activeList.includes(itemOpt);
 
-                chip.className = 'category-chip' + (isSelected ? ' selected' : '');
+                chip.className = 'category-chip' + (isSelected ? ' selected' : '') + (isLocked ? ' disabled-chip' : '');
                 chip.textContent = itemOpt;
 
-                chip.onclick = () => {
-                    onToggle(itemOpt, isSelected);
-                };
+                if (!isLocked) {
+                    chip.onclick = () => {
+                        onToggle(itemOpt, isSelected);
+                    };
+                }
 
                 container.appendChild(chip);
             });
@@ -908,6 +1013,7 @@
 
             allExercises.forEach(ex => {
                 const meta = ensureMeta(ex);
+                const isLocked = meta.isLocked || !!PRESET_EXERCISES[ex];
 
                 const item = document.createElement('div');
                 item.className = 'setting-item';
@@ -919,13 +1025,21 @@
                 nameInput.type = 'text';
                 nameInput.value = ex;
                 nameInput.style.flex = '1';
-                nameInput.onfocus = function() { this.select(); };
-                nameInput.onchange = () => {
-                    const newName = nameInput.value.trim();
-                    if (newName && newName !== ex) {
-                        renameExercise(ex, newName);
-                    }
-                };
+                
+                if (isLocked) {
+                    nameInput.disabled = true;
+                    nameInput.style.backgroundColor = '#f1f5f9';
+                    nameInput.style.color = '#64748b';
+                    nameInput.style.cursor = 'not-allowed';
+                } else {
+                    nameInput.onfocus = function() { this.select(); };
+                    nameInput.onchange = () => {
+                        const newName = nameInput.value.trim();
+                        if (newName && newName !== ex) {
+                            renameExercise(ex, newName);
+                        }
+                    };
+                }
 
                 const favBtn = document.createElement('button');
                 favBtn.className = 'star-btn' + (meta.favorite ? ' active' : '');
@@ -940,53 +1054,33 @@
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
+                deleteBtn.className = 'delete-btn' + (isLocked ? ' disabled-btn' : '');
                 deleteBtn.textContent = 'X';
                 deleteBtn.type = 'button';
-                deleteBtn.title = 'Delete Exercise';
-                deleteBtn.onclick = () => {
-                    if (confirm(`Are you sure you want to delete "${ex}" and all its history?`)) {
-                        deleteExercise(ex);
-                    }
-                };
+                deleteBtn.title = isLocked ? 'Default exercises cannot be deleted' : 'Delete Exercise';
+                
+                if (!isLocked) {
+                    deleteBtn.onclick = () => {
+                        if (confirm(`Are you sure you want to delete "${ex}" and all its history?`)) {
+                            deleteExercise(ex);
+                        }
+                    };
+                }
 
                 topRow.appendChild(nameInput);
                 topRow.appendChild(favBtn);
                 topRow.appendChild(deleteBtn);
                 item.appendChild(topRow);
 
-                // 1. Equipment Selection Chips
-                const equipLabel = document.createElement('label');
-                equipLabel.textContent = 'Equipment:';
-                equipLabel.style.marginTop = '6px';
-
-                const equipChipsDiv = document.createElement('div');
-                equipChipsDiv.className = 'category-chips';
-
-                renderBinaryCategoryChips(equipChipsDiv, EQUIPMENT, meta.equipment, (itemOpt, isSelected) => {
-                    if (isSelected) {
-                        meta.equipment = meta.equipment.filter(e => e !== itemOpt);
-                    } else {
-                        meta.equipment.push(itemOpt);
-                    }
-                    saveMeta();
-                    renderSettingsList();
-                    updateFavoritesList();
-                    updateWeightFieldState();
-                });
-
-                item.appendChild(equipLabel);
-                item.appendChild(equipChipsDiv);
-
-                // 2. Muscle Groups Selection Chips
+                // 1. Muscle Groups Selection Chips
                 const mgLabel = document.createElement('label');
                 mgLabel.textContent = 'Muscle Groups:';
-                mgLabel.style.marginTop = '10px';
+                mgLabel.style.marginTop = '6px';
 
                 const mgChipsDiv = document.createElement('div');
                 mgChipsDiv.className = 'category-chips';
 
-                renderBinaryCategoryChips(mgChipsDiv, MUSCLE_GROUPS, meta.muscleGroups, (itemOpt, isSelected) => {
+                renderBinaryCategoryChips(mgChipsDiv, MUSCLE_GROUPS, meta.muscleGroups, isLocked, (itemOpt, isSelected) => {
                     if (isSelected) {
                         meta.muscleGroups = meta.muscleGroups.filter(m => m !== itemOpt);
                     } else {
@@ -1000,7 +1094,7 @@
                 item.appendChild(mgLabel);
                 item.appendChild(mgChipsDiv);
 
-                // 3. Muscles (general) Selection Chips
+                // 2. Muscles (general) Selection Chips
                 const mgGenLabel = document.createElement('label');
                 mgGenLabel.textContent = 'Muscles (general):';
                 mgGenLabel.style.marginTop = '10px';
@@ -1008,7 +1102,7 @@
                 const mgGenChipsDiv = document.createElement('div');
                 mgGenChipsDiv.className = 'category-chips';
 
-                renderBinaryCategoryChips(mgGenChipsDiv, MUSCLES_GENERAL, meta.musclesGeneral, (itemOpt, isSelected) => {
+                renderBinaryCategoryChips(mgGenChipsDiv, MUSCLES_GENERAL, meta.musclesGeneral, isLocked, (itemOpt, isSelected) => {
                     if (isSelected) {
                         meta.musclesGeneral = meta.musclesGeneral.filter(m => m !== itemOpt);
                     } else {
@@ -1038,7 +1132,7 @@
                 exerciseMeta[newName] = exerciseMeta[key];
                 if (key !== newName) delete exerciseMeta[key];
             } else {
-                exerciseMeta[newName] = { favorite: false, equipment: [], muscleGroups: [], musclesGeneral: [] };
+                exerciseMeta[newName] = { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], isLocked: false };
             }
             saveMeta();
 
