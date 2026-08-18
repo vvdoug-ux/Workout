@@ -140,6 +140,37 @@
         }
         .star-btn.active:hover { color: #ca8a04; }
 
+        /* Filter Row Styles for Favorites Section */
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .filter-btn {
+            flex: 1;
+            padding: 8px 6px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.85em;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            margin-top: 0;
+        }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .filter-btn.sub-btn {
+            font-size: 0.8em;
+            padding: 6px 4px;
+        }
+
         /* Favorites Quick Selection Section */
         .favorites-grid {
             display: flex;
@@ -350,7 +381,19 @@
 
         <!-- Favorites Quick Select Card -->
         <div class="card">
-            <h2>Favorites</h2>
+            <!-- Row 1: View Filter Buttons -->
+            <div class="filter-row">
+                <button type="button" class="filter-btn active" id="btn-view-favorites" onclick="setViewFilter('favorites')">Favorites Only</button>
+                <button type="button" class="filter-btn" id="btn-view-all" onclick="setViewFilter('all')">Show All</button>
+            </div>
+            <!-- Row 2: Split / Focus Filter Buttons -->
+            <div class="filter-row" style="gap: 4px;">
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-leg" onclick="setCategoryFilter('Leg Day')">Leg Day</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-arm" onclick="setCategoryFilter('Arm Day')">Arm Day</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-core" onclick="setCategoryFilter('Core')">Core</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-push" onclick="setCategoryFilter('Push')">Push</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-pull" onclick="setCategoryFilter('Pull')">Pull</button>
+            </div>
             <div id="favorites-list"></div>
         </div>
     </div>
@@ -498,6 +541,10 @@
         // Load existing data from browser storage
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
+
+        // Favorites / List Filter States
+        let activeViewFilter = 'favorites'; // 'favorites' or 'all'
+        let activeCategoryFilter = null;   // null, 'Leg Day', 'Arm Day', 'Core', 'Push', 'Pull'
 
         function normalizeArray(data) {
             if (!data) return [];
@@ -749,40 +796,145 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        /* --- Filter Controls Logic --- */
+        function setViewFilter(mode) {
+            activeViewFilter = mode;
+            updateFilterButtons();
+            updateFavoritesList();
+        }
+
+        function setCategoryFilter(cat) {
+            if (activeCategoryFilter === cat) {
+                activeCategoryFilter = null; // Deselect if clicked again
+            } else {
+                activeCategoryFilter = cat;
+            }
+            updateFilterButtons();
+            updateFavoritesList();
+        }
+
+        function updateFilterButtons() {
+            const btnFav = document.getElementById('btn-view-favorites');
+            const btnAll = document.getElementById('btn-view-all');
+
+            if (btnFav && btnAll) {
+                if (activeViewFilter === 'favorites') {
+                    btnFav.classList.add('active');
+                    btnAll.classList.remove('active');
+                } else {
+                    btnFav.classList.remove('active');
+                    btnAll.classList.add('active');
+                }
+            }
+
+            const catMap = {
+                'Leg Day': 'btn-cat-leg',
+                'Arm Day': 'btn-cat-arm',
+                'Core': 'btn-cat-core',
+                'Push': 'btn-cat-push',
+                'Pull': 'btn-cat-pull'
+            };
+
+            Object.keys(catMap).forEach(catKey => {
+                const btn = document.getElementById(catMap[catKey]);
+                if (btn) {
+                    if (activeCategoryFilter === catKey) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+        }
+
         function updateFavoritesList() {
             const container = document.getElementById('favorites-list');
             container.innerHTML = '';
             
-            const favExercises = Object.keys(exerciseMeta).filter(k => exerciseMeta[k].favorite);
-            
-            if (favExercises.length === 0) {
-                container.innerHTML = '<p style="color: #64748b; font-size: 0.9em; margin: 0;">No favorites added yet. Click the star ★ next to an exercise to favorite it!</p>';
+            let exercises = [...new Set([
+                ...workouts.map(w => w.exercise),
+                ...Object.keys(exerciseMeta)
+            ])];
+
+            // Filter Row 1: Favorites vs Show All
+            if (activeViewFilter === 'favorites') {
+                exercises = exercises.filter(ex => getMeta(ex).favorite);
+            }
+
+            // Filter Row 2: Workout Focus / Split Filter
+            if (activeCategoryFilter) {
+                exercises = exercises.filter(ex => {
+                    const meta = getMeta(ex);
+                    const groups = meta.muscleGroups || [];
+                    if (activeCategoryFilter === 'Leg Day') {
+                        return groups.includes('Legs');
+                    } else if (activeCategoryFilter === 'Arm Day') {
+                        return groups.some(mg => ['Arms', 'Chest', 'Back', 'Shoulders'].includes(mg));
+                    } else if (activeCategoryFilter === 'Core') {
+                        return groups.includes('Core');
+                    } else if (activeCategoryFilter === 'Push') {
+                        return groups.includes('Push');
+                    } else if (activeCategoryFilter === 'Pull') {
+                        return groups.includes('Pull');
+                    }
+                    return true;
+                });
+            }
+
+            if (exercises.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; font-size: 0.9em; margin: 0;">No exercises match the selected filters.</p>';
                 return;
             }
 
             const todayStr = getPacificDateString();
 
-            const categorizedFavs = {};
-            MUSCLE_GROUPS.forEach(mg => categorizedFavs[mg] = []);
-            categorizedFavs["Uncategorized"] = [];
+            // Grouping and Display Logic:
+            // When a Row 2 category button is clicked, group exercises by their "Muscles (general)" tag.
+            // When no Row 2 category button is clicked, default group by "Muscle Groups".
+            if (activeCategoryFilter) {
+                const categorized = {};
+                MUSCLES_GENERAL.forEach(m => categorized[m] = []);
+                categorized["Uncategorized"] = [];
 
-            favExercises.forEach(ex => {
-                const meta = getMeta(ex);
-                const activeFavGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
+                exercises.forEach(ex => {
+                    const meta = getMeta(ex);
+                    const genMuscles = (meta.musclesGeneral || []).filter(m => MUSCLES_GENERAL.includes(m));
 
-                if (activeFavGroups.length > 0) {
-                    [...new Set(activeFavGroups)].forEach(mg => {
-                        categorizedFavs[mg].push(ex);
-                    });
-                } else {
-                    categorizedFavs["Uncategorized"].push(ex);
-                }
-            });
+                    if (genMuscles.length > 0) {
+                        [...new Set(genMuscles)].forEach(m => {
+                            categorized[m].push(ex);
+                        });
+                    } else {
+                        categorized["Uncategorized"].push(ex);
+                    }
+                });
 
-            const allCatKeys = [...MUSCLE_GROUPS, "Uncategorized"];
+                renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
+            } else {
+                const categorized = {};
+                MUSCLE_GROUPS.forEach(mg => categorized[mg] = []);
+                categorized["Uncategorized"] = [];
 
-            allCatKeys.forEach(mg => {
-                const exercisesInCat = categorizedFavs[mg];
+                exercises.forEach(ex => {
+                    const meta = getMeta(ex);
+                    const activeGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
+
+                    if (activeGroups.length > 0) {
+                        [...new Set(activeGroups)].forEach(mg => {
+                            categorized[mg].push(ex);
+                        });
+                    } else {
+                        categorized["Uncategorized"].push(ex);
+                    }
+                });
+
+                renderCategoryGroups(container, categorized, [...MUSCLE_GROUPS, "Uncategorized"], todayStr);
+            }
+        }
+
+        function renderCategoryGroups(container, categorizedMap, categoryKeys, todayStr) {
+            categoryKeys.forEach(catKey => {
+                const exercisesInCat = categorizedMap[catKey];
                 if (exercisesInCat && exercisesInCat.length > 0) {
                     exercisesInCat.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
                     const uniqueEx = [...new Set(exercisesInCat)];
@@ -791,7 +943,7 @@
                     groupDiv.style.marginBottom = '14px';
 
                     const catHeader = document.createElement('div');
-                    catHeader.textContent = mg;
+                    catHeader.textContent = catKey;
                     catHeader.style.fontSize = '0.8em';
                     catHeader.style.fontWeight = 'bold';
                     catHeader.style.color = '#64748b';
@@ -831,6 +983,7 @@
         function updateUI() {
             updateTable();
             updateExerciseLists();
+            updateFilterButtons();
             updateFavoritesList();
             updateChart();
         }
@@ -1125,6 +1278,7 @@
                     }
                     saveMeta();
                     renderSettingsList();
+                    updateFavoritesList();
                 });
 
                 item.appendChild(mgGenLabel);
