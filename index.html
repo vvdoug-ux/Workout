@@ -339,7 +339,6 @@
     <!-- Log Exercise Section -->
     <div id="section-log" class="tab-content active">
         <div class="card">
-            <h2>Log Exercise</h2>
             <form id="workout-form">
                 <div class="form-group">
                     <label>Date</label>
@@ -387,7 +386,7 @@
                 <button type="button" class="filter-btn" id="btn-view-all" onclick="setViewFilter('all')">Show All</button>
             </div>
             <!-- Row 2: Split / Focus Filter Buttons -->
-            <div class="filter-row" style="gap: 4px;">
+            <div class="filter-row" style="gap: 4px; margin-bottom: 22px;">
                 <button type="button" class="filter-btn sub-btn" id="btn-cat-leg" onclick="setCategoryFilter('Leg Day')">Leg Day</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-cat-arm" onclick="setCategoryFilter('Arm Day')">Arm Day</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-cat-core" onclick="setCategoryFilter('Core')">Core</button>
@@ -498,8 +497,8 @@
             "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Legs"], musclesGeneral: ["Quads"], isLocked: true },
             "Dips (narrow)": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Arms"], musclesGeneral: ["Triceps"], isLocked: true },
             "Dips (wide)": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
-            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Pull"], musclesGeneral: [], isLocked: true },
-            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: [], isLocked: true },
+            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Pull", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids", "Traps"], isLocked: true },
             "Shrugs": { defaultEquipment: "Barbell", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Traps"], isLocked: true },
@@ -890,7 +889,7 @@
 
             // Grouping and Display Logic:
             // When a Row 2 category button is clicked, group exercises by their "Muscles (general)" tag.
-            // When no Row 2 category button is clicked, default group by "Muscle Groups".
+            // When no Row 2 category button is clicked, default group by "Muscle Groups" (excluding Push and Pull categories).
             if (activeCategoryFilter) {
                 const categorized = {};
                 MUSCLES_GENERAL.forEach(m => categorized[m] = []);
@@ -911,13 +910,15 @@
 
                 renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
             } else {
+                // Filter out "Push" and "Pull" categories when no second row filter is selected
+                const displayGroups = MUSCLE_GROUPS.filter(mg => mg !== "Push" && mg !== "Pull");
                 const categorized = {};
-                MUSCLE_GROUPS.forEach(mg => categorized[mg] = []);
+                displayGroups.forEach(mg => categorized[mg] = []);
                 categorized["Uncategorized"] = [];
 
                 exercises.forEach(ex => {
                     const meta = getMeta(ex);
-                    const activeGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
+                    const activeGroups = (meta.muscleGroups || []).filter(mg => displayGroups.includes(mg));
 
                     if (activeGroups.length > 0) {
                         [...new Set(activeGroups)].forEach(mg => {
@@ -928,7 +929,7 @@
                     }
                 });
 
-                renderCategoryGroups(container, categorized, [...MUSCLE_GROUPS, "Uncategorized"], todayStr);
+                renderCategoryGroups(container, categorized, [...displayGroups, "Uncategorized"], todayStr);
             }
         }
 
