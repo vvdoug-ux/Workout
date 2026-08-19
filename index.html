@@ -14,6 +14,8 @@
             padding: 20px; 
             background: #f4f4f9; 
             color: #333; 
+            user-select: none;
+            -webkit-user-select: none;
         }
         
         /* Top Navigation Header */
@@ -77,6 +79,12 @@
             border-radius: 6px; 
             box-sizing: border-box; 
             font-size: 16px; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        input[type="text"], input[type="number"], input[type="date"] {
+            user-select: auto;
+            -webkit-user-select: auto;
         }
         button { 
             background: #2563eb; 
@@ -229,6 +237,8 @@
             padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .modal-header {
             display: flex;
@@ -400,10 +410,12 @@
 
         <!-- Favorites Quick Select Card -->
         <div class="card">
-            <!-- Row 1: View Filter Buttons -->
-            <div class="filter-row">
-                <button type="button" class="filter-btn active" id="btn-view-favorites" onclick="setViewFilter('favorites')">Favorites Only</button>
-                <button type="button" class="filter-btn" id="btn-view-all" onclick="setViewFilter('all')">Show All</button>
+            <!-- Row 1: View Filter Buttons & Categorization Mode -->
+            <div class="filter-row" style="gap: 4px;">
+                <button type="button" class="filter-btn sub-btn active" id="btn-view-favorites" onclick="setViewFilter('favorites')">Favorites</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-view-all" onclick="setViewFilter('all')">All</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-group-groups" onclick="toggleGroupMode('groups')">Groups</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-group-muscles" onclick="toggleGroupMode('muscles')">Muscles</button>
             </div>
             <!-- Row 2: Split / Focus Filter Buttons -->
             <div class="filter-row" style="gap: 4px;">
@@ -500,7 +512,7 @@
             <div style="display: flex; gap: 4px; margin-bottom: 18px;" id="day-modal-buttons">
                 <!-- Su, M, Tu, W, Th, F, Sa buttons populated dynamically -->
             </div>
-            <button type="button" onclick="closeDayModal()" style="margin-top: 0;">Done</button>
+            <button type="button" onclick="closeDayModal()" style="margin-top: 0; user-select: none; -webkit-user-select: none;">Done</button>
         </div>
     </div>
 
@@ -529,7 +541,7 @@
             "Plank (reverse)", "Leg Raises (floor)", "Leg Raises (hanging)", "Deadlifts (romanian)"
         ];
 
-        // Available Group Options (Upper Body and Lower Body removed)
+        // Available Group Options
         const MUSCLE_GROUPS = [
             "Arms", "Back", "Chest", "Core", "Legs", 
             "Pull", "Push", "Shoulders"
@@ -542,7 +554,7 @@
             "Traps", "Triceps"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-        // Pre-populated default locked exercises definitions (Purged items removed)
+        // Pre-populated default locked exercises definitions
         const PRESET_EXERCISES = {
             "Push-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Pull-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Lats"], isLocked: true },
@@ -609,8 +621,11 @@
 
         // Favorites / List Filter States
         let activeViewFilter = 'favorites'; // 'favorites' or 'all'
-        let activeCategoryFilter = null;   // null, 'Leg Day', 'Arm Day', 'Core', 'Push', 'Pull'
-        let activeDayFilter = null;        // null, 'Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'
+        let activeGroupMode = localStorage.getItem('activeGroupMode') || null; // 'groups', 'muscles', or null
+        if (activeGroupMode === 'null' || activeGroupMode === 'undefined') activeGroupMode = null;
+
+        let activeCategoryFilter = null;   // Row 2: null, 'Leg Day', 'Arm Day', 'Core', 'Push', 'Pull'
+        let activeDayFilter = null;        // Row 3: null, 'Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'
 
         function normalizeArray(data) {
             if (!data) return [];
@@ -892,11 +907,30 @@
             updateFavoritesList();
         }
 
+        function toggleGroupMode(mode) {
+            if (activeGroupMode === mode) {
+                activeGroupMode = null; // Toggle off if clicked again
+            } else {
+                activeGroupMode = mode;
+            }
+            
+            if (activeGroupMode) {
+                localStorage.setItem('activeGroupMode', activeGroupMode);
+            } else {
+                localStorage.removeItem('activeGroupMode');
+            }
+
+            updateFilterButtons();
+            updateFavoritesList();
+        }
+
+        // Mutual exclusivity between Row 2 (Category Filter) and Row 3 (Day Filter)
         function setCategoryFilter(cat) {
             if (activeCategoryFilter === cat) {
                 activeCategoryFilter = null; // Deselect if clicked again
             } else {
                 activeCategoryFilter = cat;
+                activeDayFilter = null; // Deselect day filter if category selected
             }
             updateFilterButtons();
             updateFavoritesList();
@@ -904,9 +938,10 @@
 
         function setDayFilter(day) {
             if (activeDayFilter === day) {
-                activeDayFilter = null; // Single select toggle
+                activeDayFilter = null; // Deselect if clicked again
             } else {
                 activeDayFilter = day;
+                activeCategoryFilter = null; // Deselect category filter if day selected
             }
             updateFilterButtons();
             updateFavoritesList();
@@ -915,6 +950,8 @@
         function updateFilterButtons() {
             const btnFav = document.getElementById('btn-view-favorites');
             const btnAll = document.getElementById('btn-view-all');
+            const btnGrp = document.getElementById('btn-group-groups');
+            const btnMus = document.getElementById('btn-group-muscles');
 
             if (btnFav && btnAll) {
                 if (activeViewFilter === 'favorites') {
@@ -923,6 +960,19 @@
                 } else {
                     btnFav.classList.remove('active');
                     btnAll.classList.add('active');
+                }
+            }
+
+            if (btnGrp && btnMus) {
+                if (activeGroupMode === 'groups') {
+                    btnGrp.classList.add('active');
+                    btnMus.classList.remove('active');
+                } else if (activeGroupMode === 'muscles') {
+                    btnGrp.classList.remove('active');
+                    btnMus.classList.add('active');
+                } else {
+                    btnGrp.classList.remove('active');
+                    btnMus.classList.remove('active');
                 }
             }
 
@@ -966,12 +1016,12 @@
                 ...Object.keys(exerciseMeta)
             ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()));
 
-            // Filter Row 1: Favorites vs Show All
+            // Filter Row 1: Favorites vs All
             if (activeViewFilter === 'favorites') {
                 exercises = exercises.filter(ex => getMeta(ex).favorite);
             }
 
-            // Filter Row 2: Workout Focus / Split Filter
+            // Filter Row 2 or Row 3 (Mutually Exclusive Filter)
             if (activeCategoryFilter) {
                 exercises = exercises.filter(ex => {
                     const meta = getMeta(ex);
@@ -989,10 +1039,7 @@
                     }
                     return true;
                 });
-            }
-
-            // Filter Row 3: Day of Week Filter
-            if (activeDayFilter) {
+            } else if (activeDayFilter) {
                 exercises = exercises.filter(ex => {
                     const meta = getMeta(ex);
                     const days = meta.days || [];
@@ -1007,7 +1054,8 @@
 
             const todayStr = getPacificDateString();
 
-            if (activeCategoryFilter) {
+            // Display Categorization Logic (Groups vs Muscles vs Flat Alphabetical)
+            if (activeGroupMode === 'muscles') {
                 const categorized = {};
                 MUSCLES_GENERAL.forEach(m => categorized[m] = []);
                 categorized["Uncategorized"] = [];
@@ -1026,15 +1074,14 @@
                 });
 
                 renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
-            } else {
-                const displayGroups = MUSCLE_GROUPS.filter(mg => mg !== "Push" && mg !== "Pull");
+            } else if (activeGroupMode === 'groups') {
                 const categorized = {};
-                displayGroups.forEach(mg => categorized[mg] = []);
+                MUSCLE_GROUPS.forEach(mg => categorized[mg] = []);
                 categorized["Uncategorized"] = [];
 
                 exercises.forEach(ex => {
                     const meta = getMeta(ex);
-                    const activeGroups = (meta.muscleGroups || []).filter(mg => displayGroups.includes(mg));
+                    const activeGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
 
                     if (activeGroups.length > 0) {
                         [...new Set(activeGroups)].forEach(mg => {
@@ -1045,7 +1092,36 @@
                     }
                 });
 
-                renderCategoryGroups(container, categorized, [...displayGroups, "Uncategorized"], todayStr);
+                renderCategoryGroups(container, categorized, [...MUSCLE_GROUPS, "Uncategorized"], todayStr);
+            } else {
+                // Neither Groups nor Muscles selected -> Display alphabetically with no category labels
+                exercises.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'favorites-grid';
+
+                exercises.forEach(ex => {
+                    const btn = document.createElement('button');
+                    btn.className = 'fav-btn';
+                    btn.type = 'button';
+                    btn.textContent = ex;
+
+                    const isLoggedToday = workouts.some(w => 
+                        w.exercise.toLowerCase() === ex.toLowerCase() && w.date === todayStr
+                    );
+
+                    if (isLoggedToday) {
+                        btn.classList.add('logged');
+                        btn.title = 'Already logged today (Long-press to assign days)';
+                    } else {
+                        btn.title = 'Long-press to assign days';
+                    }
+
+                    attachLongPress(btn, ex);
+                    gridDiv.appendChild(btn);
+                });
+
+                container.appendChild(gridDiv);
             }
         }
 
@@ -1054,7 +1130,7 @@
             let timer = null;
             let isLongPress = false;
 
-            const start = () => {
+            const start = (e) => {
                 isLongPress = false;
                 timer = setTimeout(() => {
                     isLongPress = true;
@@ -1069,6 +1145,7 @@
                 }
             };
 
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
             btn.addEventListener('mousedown', start);
             btn.addEventListener('touchstart', start, { passive: true });
 
@@ -1143,6 +1220,14 @@
             activeDayModalExercise = exName;
             document.getElementById('day-modal-title').textContent = `Assign Days: ${exName}`;
             renderDayModalButtons();
+            
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+            if (window.getSelection) {
+                window.getSelection().removeAllRanges();
+            }
+
             document.getElementById('day-modal').classList.add('active');
         }
 
@@ -1443,7 +1528,7 @@
                 topRow.appendChild(deleteBtn);
                 item.appendChild(topRow);
 
-                // 1. Groups Selection Chips (Renamed from Muscle Groups)
+                // Groups Selection Chips
                 const mgLabel = document.createElement('label');
                 mgLabel.textContent = 'Groups:';
                 mgLabel.style.marginTop = '6px';
@@ -1465,7 +1550,7 @@
                 item.appendChild(mgLabel);
                 item.appendChild(mgChipsDiv);
 
-                // 2. Muscles Selection Chips (Renamed from Muscles general)
+                // Muscles Selection Chips
                 const mgGenLabel = document.createElement('label');
                 mgGenLabel.textContent = 'Muscles:';
                 mgGenLabel.style.marginTop = '10px';
