@@ -114,7 +114,7 @@
             background: transparent;
             color: #64748b;
             border: none;
-            border-radius: 0; /* Middle buttons have no rounded corners */
+            border-radius: 0; /* Middle button has no rounded corners */
             font-family: inherit;
             font-weight: bold;
             font-size: 0.85em;
@@ -128,41 +128,26 @@
             position: relative;
         }
 
-        /* Specific corner rounding for outer scale edges */
-        .diff-btn[data-diff="up"] {
-            border-radius: 6px 0 0 6px; /* Left button: only top-left & bottom-left rounded */
+        /* Outer button corner rounding */
+        .diff-btn[data-diff="HARD"] {
+            border-radius: 6px 0 0 6px;
         }
-        .diff-btn[data-diff="down"] {
-            border-radius: 0 6px 6px 0; /* Right button: only top-right & bottom-right rounded */
+        .diff-btn[data-diff="EASY"] {
+            border-radius: 0 6px 6px 0;
         }
         
         /* Active Selected Colors */
-        .diff-btn[data-diff="up"].selected {
-            background: #dc2626; /* Darker Red */
-            color: white;
-        }
         .diff-btn[data-diff="HARD"].selected {
             background: #ef4444; /* Red */
             color: white;
         }
-        .diff-btn[data-diff="MEDIUM"].selected {
+        .diff-btn[data-diff="BALANCED"].selected {
             background: #eab308; /* Yellow */
             color: white;
         }
         .diff-btn[data-diff="EASY"].selected {
             background: #22c55e; /* Green */
             color: white;
-        }
-        .diff-btn[data-diff="down"].selected {
-            background: #16a34a; /* Green */
-            color: white;
-        }
-
-        /* Outlines ONLY applied when suggested (3-in-a-row streak) */
-        .diff-btn.outline-down,
-        .diff-btn.outline-up {
-            box-shadow: inset 0 0 0 2px #000000;
-            z-index: 5;
         }
 
         /* Equipment Tag Selector in Log Section */
@@ -476,14 +461,12 @@
                     </div>
                 </div>
 
-                <!-- Difficulty Scale Bar -->
+                <!-- 3-Button Difficulty Scale Bar -->
                 <div class="form-group">
                     <div class="difficulty-group" id="difficulty-group">
-                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">&lt;&lt;&lt;</button>
                         <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
-                        <button type="button" class="diff-btn" data-diff="MEDIUM" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
+                        <button type="button" class="diff-btn" data-diff="BALANCED" onclick="setDifficulty('BALANCED')">BALANCED</button>
                         <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">&gt;&gt;&gt;</button>
                     </div>
                 </div>
 
@@ -620,11 +603,9 @@
 
                 <div class="form-group">
                     <div class="difficulty-group" id="edit-difficulty-group">
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">&lt;&lt;&lt;</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD')">HARD</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="MEDIUM" onclick="setEditDifficulty('MEDIUM')">MEDIUM</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="BALANCED" onclick="setEditDifficulty('BALANCED')">BALANCED</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">&gt;&gt;&gt;</button>
                     </div>
                 </div>
 
@@ -692,6 +673,9 @@
             else if (timeframe === 'year') d.setFullYear(d.getFullYear() - 1);
             return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
+
+        // Random words pool for BALANCED button alternate click state
+        const BALANCED_WORDS = ["OPTIMAL", "DIALED IN", "IN THE ZONE", "PERFECT", "GOLDILOCKS", "JUST RIGHT", "THE SWEET SPOT", "GREAT!"];
 
         // Available Days of Week
         const DAYS_OF_WEEK = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
@@ -769,6 +753,15 @@
         // History Actions / Editing State
         let activeHistoryId = null;
         let editSelectedEquipment = "Bodyweight";
+
+        // Log Form Difficulty State
+        let selectedDifficultyType = null;  // 'HARD', 'BALANCED', 'EASY'
+        let selectedDifficultyStage = 0;    // 0 = unselected, 1 = selected, 2 = alternate word
+        let selectedDifficulty = null;     // Value saved to database entry
+
+        // Edit Modal Difficulty State
+        let editSelectedDiffType = null;
+        let editSelectedDiffStage = 0;
         let editSelectedDifficulty = null;
 
         // Purge requested exercises from storage completely
@@ -854,7 +847,6 @@
 
         let chartInstance = null;
         let selectedFormEquipment = "Bodyweight";
-        let selectedDifficulty = null;
         let activeDayModalExercise = null;
 
         const form = document.getElementById('workout-form');
@@ -881,55 +873,174 @@
             updateWeightFieldState();
         }
 
-        // Toggleable / Optional Difficulty Selection with Return-To-Default on Deselect
-        function setDifficulty(diff) {
-            if (selectedDifficulty === diff) {
-                selectedDifficulty = null; // Unselect if clicked again
+        /* Log Form Difficulty Button Logic */
+        function setDifficulty(type) {
+            if (selectedDifficultyType !== type) {
+                selectedDifficultyType = type;
+                selectedDifficultyStage = 1;
+                if (type === 'HARD') selectedDifficulty = 'HARD';
+                else if (type === 'EASY') selectedDifficulty = 'EASY';
+                else if (type === 'BALANCED') selectedDifficulty = 'BALANCED';
             } else {
-                selectedDifficulty = diff;
+                if (selectedDifficultyStage === 1) {
+                    selectedDifficultyStage = 2;
+                    if (type === 'HARD') {
+                        selectedDifficulty = 'TOO HARD';
+                    } else if (type === 'EASY') {
+                        selectedDifficulty = 'TOO EASY';
+                    } else if (type === 'BALANCED') {
+                        const randomWord = BALANCED_WORDS[Math.floor(Math.random() * BALANCED_WORDS.length)];
+                        selectedDifficulty = randomWord;
+                    }
+                } else {
+                    // Third click reverts back to unclicked state
+                    selectedDifficultyType = null;
+                    selectedDifficultyStage = 0;
+                    selectedDifficulty = null;
+                }
+            }
+            updateDifficultyUI();
+        }
+
+        function setDifficultyFromValue(val) {
+            if (!val) {
+                selectedDifficultyType = null;
+                selectedDifficultyStage = 0;
+                selectedDifficulty = null;
+            } else if (val === 'HARD') {
+                selectedDifficultyType = 'HARD';
+                selectedDifficultyStage = 1;
+                selectedDifficulty = 'HARD';
+            } else if (val === 'TOO HARD') {
+                selectedDifficultyType = 'HARD';
+                selectedDifficultyStage = 2;
+                selectedDifficulty = 'TOO HARD';
+            } else if (val === 'EASY') {
+                selectedDifficultyType = 'EASY';
+                selectedDifficultyStage = 1;
+                selectedDifficulty = 'EASY';
+            } else if (val === 'TOO EASY') {
+                selectedDifficultyType = 'EASY';
+                selectedDifficultyStage = 2;
+                selectedDifficulty = 'TOO EASY';
+            } else if (val === 'BALANCED') {
+                selectedDifficultyType = 'BALANCED';
+                selectedDifficultyStage = 1;
+                selectedDifficulty = 'BALANCED';
+            } else {
+                selectedDifficultyType = 'BALANCED';
+                selectedDifficultyStage = 2;
+                selectedDifficulty = val;
             }
             updateDifficultyUI();
         }
 
         function updateDifficultyUI() {
-            document.querySelectorAll('#difficulty-group .diff-btn').forEach(btn => {
-                if (btn.dataset.diff === selectedDifficulty) {
-                    btn.classList.add('selected');
-                } else {
-                    btn.classList.remove('selected');
-                }
-            });
+            const hardBtn = document.querySelector('#difficulty-group .diff-btn[data-diff="HARD"]');
+            const balBtn = document.querySelector('#difficulty-group .diff-btn[data-diff="BALANCED"]');
+            const easyBtn = document.querySelector('#difficulty-group .diff-btn[data-diff="EASY"]');
+
+            if (!hardBtn || !balBtn || !easyBtn) return;
+
+            hardBtn.classList.remove('selected');
+            balBtn.classList.remove('selected');
+            easyBtn.classList.remove('selected');
+
+            hardBtn.textContent = (selectedDifficultyType === 'HARD' && selectedDifficultyStage === 2) ? 'TOO HARD' : 'HARD';
+            easyBtn.textContent = (selectedDifficultyType === 'EASY' && selectedDifficultyStage === 2) ? 'TOO EASY' : 'EASY';
+            balBtn.textContent = (selectedDifficultyType === 'BALANCED' && selectedDifficultyStage === 2) ? selectedDifficulty : 'BALANCED';
+
+            if (selectedDifficultyType === 'HARD') hardBtn.classList.add('selected');
+            if (selectedDifficultyType === 'BALANCED') balBtn.classList.add('selected');
+            if (selectedDifficultyType === 'EASY') easyBtn.classList.add('selected');
         }
 
-        function checkDifficultyOutlines(sortedWorkoutsForEx) {
-            const btnDown = document.querySelector('#difficulty-group .diff-btn[data-diff="down"]');
-            const btnUp = document.querySelector('#difficulty-group .diff-btn[data-diff="up"]');
-
-            if (btnDown) btnDown.classList.remove('outline-down');
-            if (btnUp) btnUp.classList.remove('outline-up');
-
-            if (!sortedWorkoutsForEx || sortedWorkoutsForEx.length < 3) return;
-
-            const last3 = sortedWorkoutsForEx.slice(0, 3);
-
-            const allEasy = last3.length === 3 && last3.every(w => w.difficulty === 'EASY');
-            const allHard = last3.length === 3 && last3.every(w => w.difficulty === 'HARD');
-
-            if (allEasy && btnDown) {
-                btnDown.classList.add('outline-down'); // Outlines >>> in black when EASY 3x in a row
+        /* Edit Modal Difficulty Button Logic */
+        function setEditDifficulty(type) {
+            if (editSelectedDiffType !== type) {
+                editSelectedDiffType = type;
+                editSelectedDiffStage = 1;
+                if (type === 'HARD') editSelectedDifficulty = 'HARD';
+                else if (type === 'EASY') editSelectedDifficulty = 'EASY';
+                else if (type === 'BALANCED') editSelectedDifficulty = 'BALANCED';
+            } else {
+                if (editSelectedDiffStage === 1) {
+                    editSelectedDiffStage = 2;
+                    if (type === 'HARD') {
+                        editSelectedDifficulty = 'TOO HARD';
+                    } else if (type === 'EASY') {
+                        editSelectedDifficulty = 'TOO EASY';
+                    } else if (type === 'BALANCED') {
+                        const randomWord = BALANCED_WORDS[Math.floor(Math.random() * BALANCED_WORDS.length)];
+                        editSelectedDifficulty = randomWord;
+                    }
+                } else {
+                    editSelectedDiffType = null;
+                    editSelectedDiffStage = 0;
+                    editSelectedDifficulty = null;
+                }
             }
-            if (allHard && btnUp) {
-                btnUp.classList.add('outline-up');     // Outlines <<< in black when HARD 3x in a row
+            updateEditDifficultyUI();
+        }
+
+        function setEditDifficultyFromValue(val) {
+            if (!val) {
+                editSelectedDiffType = null;
+                editSelectedDiffStage = 0;
+                editSelectedDifficulty = null;
+            } else if (val === 'HARD') {
+                editSelectedDiffType = 'HARD';
+                editSelectedDiffStage = 1;
+                editSelectedDifficulty = 'HARD';
+            } else if (val === 'TOO HARD') {
+                editSelectedDiffType = 'HARD';
+                editSelectedDiffStage = 2;
+                editSelectedDifficulty = 'TOO HARD';
+            } else if (val === 'EASY') {
+                editSelectedDiffType = 'EASY';
+                editSelectedDiffStage = 1;
+                editSelectedDifficulty = 'EASY';
+            } else if (val === 'TOO EASY') {
+                editSelectedDiffType = 'EASY';
+                editSelectedDiffStage = 2;
+                editSelectedDifficulty = 'TOO EASY';
+            } else if (val === 'BALANCED') {
+                editSelectedDiffType = 'BALANCED';
+                editSelectedDiffStage = 1;
+                editSelectedDifficulty = 'BALANCED';
+            } else {
+                editSelectedDiffType = 'BALANCED';
+                editSelectedDiffStage = 2;
+                editSelectedDifficulty = val;
             }
+            updateEditDifficultyUI();
+        }
+
+        function updateEditDifficultyUI() {
+            const hardBtn = document.querySelector('#edit-difficulty-group .diff-btn[data-diff="HARD"]');
+            const balBtn = document.querySelector('#edit-difficulty-group .diff-btn[data-diff="BALANCED"]');
+            const easyBtn = document.querySelector('#edit-difficulty-group .diff-btn[data-diff="EASY"]');
+
+            if (!hardBtn || !balBtn || !easyBtn) return;
+
+            hardBtn.classList.remove('selected');
+            balBtn.classList.remove('selected');
+            easyBtn.classList.remove('selected');
+
+            hardBtn.textContent = (editSelectedDiffType === 'HARD' && editSelectedDiffStage === 2) ? 'TOO HARD' : 'HARD';
+            easyBtn.textContent = (editSelectedDiffType === 'EASY' && editSelectedDiffStage === 2) ? 'TOO EASY' : 'EASY';
+            balBtn.textContent = (editSelectedDiffType === 'BALANCED' && editSelectedDiffStage === 2) ? editSelectedDifficulty : 'BALANCED';
+
+            if (editSelectedDiffType === 'HARD') hardBtn.classList.add('selected');
+            if (editSelectedDiffType === 'BALANCED') balBtn.classList.add('selected');
+            if (editSelectedDiffType === 'EASY') easyBtn.classList.add('selected');
         }
 
         function resetLogForm() {
             form.reset();
             document.getElementById('date').value = getPacificDateString();
             setFormEquipment("Bodyweight");
-            selectedDifficulty = null;
-            updateDifficultyUI();
-            checkDifficultyOutlines(null);
+            setDifficultyFromValue(null);
             updateStarButton();
         }
 
@@ -994,9 +1105,7 @@
 
         function autofillExerciseData(exName) {
             if (!exName) {
-                selectedDifficulty = null;
-                updateDifficultyUI();
-                checkDifficultyOutlines(null);
+                setDifficultyFromValue(null);
                 return;
             }
 
@@ -1012,22 +1121,14 @@
                     setFormEquipment(newest.equipment || getMeta(exName).defaultEquipment);
 
                     const newestWithDiff = sorted.find(w => w.difficulty);
-                    if (newestWithDiff) {
-                        selectedDifficulty = newestWithDiff.difficulty;
-                    } else {
-                        selectedDifficulty = null;
-                    }
-                    updateDifficultyUI();
-                    checkDifficultyOutlines(sorted);
+                    setDifficultyFromValue(newestWithDiff ? newestWithDiff.difficulty : null);
                     return;
                 }
             }
 
             const meta = getMeta(exName);
             setFormEquipment(meta.defaultEquipment);
-            selectedDifficulty = null;
-            updateDifficultyUI();
-            checkDifficultyOutlines([]);
+            setDifficultyFromValue(null);
         }
 
         function updateWeightFieldState() {
@@ -1084,9 +1185,7 @@
                 document.getElementById('sets').value = '';
                 document.getElementById('reps').value = '';
                 setFormEquipment("Bodyweight");
-                selectedDifficulty = null;
-                updateDifficultyUI();
-                checkDifficultyOutlines(null);
+                setDifficultyFromValue(null);
             }
             updateStarButton();
         });
@@ -1587,7 +1686,6 @@
 
             document.getElementById('edit-entry-date').value = entry.date;
             
-            // Restrict exercise select dropdown options ONLY to existing/previously used exercise names
             const editExSelect = document.getElementById('edit-entry-exercise');
             editExSelect.innerHTML = '';
             
@@ -1607,7 +1705,6 @@
                 editExSelect.appendChild(opt);
             });
 
-            // Fallback if entry exercise was purged or removed
             if (!existingExercises.some(ex => ex.toLowerCase() === entry.exercise.toLowerCase())) {
                 const opt = document.createElement('option');
                 opt.value = entry.exercise;
@@ -1621,8 +1718,7 @@
             document.getElementById('edit-entry-reps').value = entry.reps !== undefined ? entry.reps : '';
 
             setEditEquipment(entry.equipment || 'Bodyweight');
-            editSelectedDifficulty = entry.difficulty || null;
-            updateEditDifficultyUI();
+            setEditDifficultyFromValue(entry.difficulty || null);
 
             document.getElementById('edit-entry-modal').classList.add('active');
         }
@@ -1657,25 +1753,6 @@
                 wInput.style.color = '';
                 wInput.style.cursor = '';
             }
-        }
-
-        function setEditDifficulty(diff) {
-            if (editSelectedDifficulty === diff) {
-                editSelectedDifficulty = null; // Unselect if clicked again
-            } else {
-                editSelectedDifficulty = diff;
-            }
-            updateEditDifficultyUI();
-        }
-
-        function updateEditDifficultyUI() {
-            document.querySelectorAll('.edit-diff-btn').forEach(btn => {
-                if (btn.dataset.diff === editSelectedDifficulty) {
-                    btn.classList.add('selected');
-                } else {
-                    btn.classList.remove('selected');
-                }
-            });
         }
 
         function saveEditedEntry(e) {
