@@ -128,6 +128,16 @@
             position: relative;
         }
 
+        /* Hover & Focus state overrides for unselected difficulty buttons */
+        .diff-btn:hover {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        .diff-btn:focus, .diff-btn:active {
+            outline: none;
+            background: transparent;
+        }
+
         /* Outer button corner rounding */
         .diff-btn[data-diff="HARD"] {
             border-radius: 6px 0 0 6px;
@@ -149,6 +159,10 @@
             background: #22c55e; /* Green */
             color: white;
         }
+
+        .diff-btn[data-diff="HARD"].selected:hover { background: #dc2626; color: white; }
+        .diff-btn[data-diff="BALANCED"].selected:hover { background: #ca8a04; color: white; }
+        .diff-btn[data-diff="EASY"].selected:hover { background: #16a34a; color: white; }
 
         /* Equipment Tag Selector in Log Section */
         .equip-select-group {
@@ -194,12 +208,12 @@
             font-weight: bold;
             transition: color 0.2s;
         }
-        .star-btn:hover { color: #94a3b8; }
+        .star-btn:hover { color: #94a3b8; background: transparent; }
         .star-btn.active {
             background: transparent;
             color: #eab308;
         }
-        .star-btn.active:hover { color: #ca8a04; }
+        .star-btn.active:hover { color: #ca8a04; background: transparent; }
 
         /* Filter Row Styles for Favorites Section */
         .filter-row {
@@ -464,9 +478,9 @@
                 <!-- 3-Button Difficulty Scale Bar -->
                 <div class="form-group">
                     <div class="difficulty-group" id="difficulty-group">
-                        <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
-                        <button type="button" class="diff-btn" data-diff="BALANCED" onclick="setDifficulty('BALANCED')">BALANCED</button>
-                        <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
+                        <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD', this)">HARD</button>
+                        <button type="button" class="diff-btn" data-diff="BALANCED" onclick="setDifficulty('BALANCED', this)">BALANCED</button>
+                        <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY', this)">EASY</button>
                     </div>
                 </div>
 
@@ -603,9 +617,9 @@
 
                 <div class="form-group">
                     <div class="difficulty-group" id="edit-difficulty-group">
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD')">HARD</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="BALANCED" onclick="setEditDifficulty('BALANCED')">BALANCED</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY')">EASY</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD', this)">HARD</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="BALANCED" onclick="setEditDifficulty('BALANCED', this)">BALANCED</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY', this)">EASY</button>
                     </div>
                 </div>
 
@@ -874,7 +888,8 @@
         }
 
         /* Log Form Difficulty Button Logic */
-        function setDifficulty(type) {
+        function setDifficulty(type, btnElement) {
+            if (btnElement) btnElement.blur();
             if (selectedDifficultyType !== type) {
                 selectedDifficultyType = type;
                 selectedDifficultyStage = 1;
@@ -972,7 +987,8 @@
         }
 
         /* Edit Modal Difficulty Button Logic */
-        function setEditDifficulty(type) {
+        function setEditDifficulty(type, btnElement) {
+            if (btnElement) btnElement.blur();
             if (editSelectedDiffType !== type) {
                 editSelectedDiffType = type;
                 editSelectedDiffStage = 1;
@@ -1062,7 +1078,7 @@
                 balBtn.classList.add('selected');
             }
             if (editSelectedDiffType === 'EASY') {
-                easyBtn.classList.add('selected');
+                editSelectedDiffType.classList.add('selected');
                 if (editSelectedDiffStage === 2) {
                     easyBtn.style.color = 'black';
                 }
