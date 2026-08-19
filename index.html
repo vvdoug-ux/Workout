@@ -675,7 +675,7 @@
         }
 
         // Random words pool for BALANCED button alternate click state
-        const BALANCED_WORDS = ["OPTIMAL", "DIALED IN", "IN THE ZONE", "PERFECT", "GOLDILOCKS", "JUST RIGHT", "THE SWEET SPOT", "GREAT!"];
+        const BALANCED_WORDS = ["OPTIMAL", "DIALED IN", "IN THE ZONE", "PERFECT", "GOLDILOCKS", "JUST RIGHT", "SWEET SPOT", "GREAT!"];
 
         // Available Days of Week
         const DAYS_OF_WEEK = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
@@ -893,7 +893,7 @@
                         selectedDifficulty = randomWord;
                     }
                 } else {
-                    // Third click reverts back to unclicked state
+                    // Third click completely unselects the button
                     selectedDifficultyType = null;
                     selectedDifficultyStage = 0;
                     selectedDifficulty = null;
@@ -946,13 +946,29 @@
             balBtn.classList.remove('selected');
             easyBtn.classList.remove('selected');
 
+            // Reset font colors to default
+            hardBtn.style.color = '';
+            easyBtn.style.color = '';
+
             hardBtn.textContent = (selectedDifficultyType === 'HARD' && selectedDifficultyStage === 2) ? 'TOO HARD' : 'HARD';
             easyBtn.textContent = (selectedDifficultyType === 'EASY' && selectedDifficultyStage === 2) ? 'TOO EASY' : 'EASY';
             balBtn.textContent = (selectedDifficultyType === 'BALANCED' && selectedDifficultyStage === 2) ? selectedDifficulty : 'BALANCED';
 
-            if (selectedDifficultyType === 'HARD') hardBtn.classList.add('selected');
-            if (selectedDifficultyType === 'BALANCED') balBtn.classList.add('selected');
-            if (selectedDifficultyType === 'EASY') easyBtn.classList.add('selected');
+            if (selectedDifficultyType === 'HARD') {
+                hardBtn.classList.add('selected');
+                if (selectedDifficultyStage === 2) {
+                    hardBtn.style.color = 'black';
+                }
+            }
+            if (selectedDifficultyType === 'BALANCED') {
+                balBtn.classList.add('selected');
+            }
+            if (selectedDifficultyType === 'EASY') {
+                easyBtn.classList.add('selected');
+                if (selectedDifficultyStage === 2) {
+                    easyBtn.style.color = 'black';
+                }
+            }
         }
 
         /* Edit Modal Difficulty Button Logic */
@@ -975,6 +991,7 @@
                         editSelectedDifficulty = randomWord;
                     }
                 } else {
+                    // Third click completely unselects the button
                     editSelectedDiffType = null;
                     editSelectedDiffStage = 0;
                     editSelectedDifficulty = null;
@@ -1027,13 +1044,29 @@
             balBtn.classList.remove('selected');
             easyBtn.classList.remove('selected');
 
+            // Reset font colors to default
+            hardBtn.style.color = '';
+            easyBtn.style.color = '';
+
             hardBtn.textContent = (editSelectedDiffType === 'HARD' && editSelectedDiffStage === 2) ? 'TOO HARD' : 'HARD';
             easyBtn.textContent = (editSelectedDiffType === 'EASY' && editSelectedDiffStage === 2) ? 'TOO EASY' : 'EASY';
             balBtn.textContent = (editSelectedDiffType === 'BALANCED' && editSelectedDiffStage === 2) ? editSelectedDifficulty : 'BALANCED';
 
-            if (editSelectedDiffType === 'HARD') hardBtn.classList.add('selected');
-            if (editSelectedDiffType === 'BALANCED') balBtn.classList.add('selected');
-            if (editSelectedDiffType === 'EASY') easyBtn.classList.add('selected');
+            if (editSelectedDiffType === 'HARD') {
+                hardBtn.classList.add('selected');
+                if (editSelectedDiffStage === 2) {
+                    hardBtn.style.color = 'black';
+                }
+            }
+            if (editSelectedDiffType === 'BALANCED') {
+                balBtn.classList.add('selected');
+            }
+            if (editSelectedDiffType === 'EASY') {
+                easyBtn.classList.add('selected');
+                if (editSelectedDiffStage === 2) {
+                    easyBtn.style.color = 'black';
+                }
+            }
         }
 
         function resetLogForm() {
