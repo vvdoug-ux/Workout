@@ -114,6 +114,8 @@
             background: transparent;
             color: #64748b;
             border: none;
+            border-radius: 0; /* Middle buttons have no rounded corners */
+            font-family: inherit;
             font-weight: bold;
             font-size: 0.85em;
             cursor: pointer;
@@ -125,16 +127,22 @@
             box-sizing: border-box;
             position: relative;
         }
+
+        /* Specific corner rounding for outer scale edges */
+        .diff-btn[data-diff="up"] {
+            border-radius: 6px 0 0 6px; /* Left button: only top-left & bottom-left rounded */
+        }
+        .diff-btn[data-diff="down"] {
+            border-radius: 0 6px 6px 0; /* Right button: only top-right & bottom-right rounded */
+        }
         
-        /* Updated Active Selected Colors: Red Down Arrow, Orange, Yellow, Green, Blue Up Arrow */
+        /* Active Selected Colors */
         .diff-btn[data-diff="up"].selected {
-            background: #ef4444; /* Red */
-            color: #000000;      /* Black Font */
-            box-shadow: inset 0 0 0 2px #000000; /* Black Outline */
-            z-index: 2;
+            background: #dc2626; /* Darker Red */
+            color: white;
         }
         .diff-btn[data-diff="HARD"].selected {
-            background: #f97316; /* Orange */
+            background: #ef4444; /* Red */
             color: white;
         }
         .diff-btn[data-diff="MEDIUM"].selected {
@@ -146,19 +154,14 @@
             color: white;
         }
         .diff-btn[data-diff="down"].selected {
-            background: #3b82f6; /* Blue */
-            color: #000000;      /* Black Font */
-            box-shadow: inset 0 0 0 2px #000000; /* Black Outline */
-            z-index: 2;
+            background: #16a34a; /* Green */
+            color: white;
         }
 
-        /* Outlines for 3-in-a-row streak */
-        .diff-btn.outline-down {
-            box-shadow: inset 0 0 0 2px #3b82f6;
-            z-index: 5;
-        }
+        /* Outlines ONLY applied when suggested (3-in-a-row streak) */
+        .diff-btn.outline-down,
         .diff-btn.outline-up {
-            box-shadow: inset 0 0 0 2px #ef4444;
+            box-shadow: inset 0 0 0 2px #000000;
             z-index: 5;
         }
 
@@ -476,11 +479,11 @@
                 <!-- Difficulty Scale Bar -->
                 <div class="form-group">
                     <div class="difficulty-group" id="difficulty-group">
-                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">🡇</button>
+                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">&lt;&lt;&lt;</button>
                         <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn" data-diff="MEDIUM" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">🡅</button>
+                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">&gt;&gt;&gt;</button>
                     </div>
                 </div>
 
@@ -617,11 +620,11 @@
 
                 <div class="form-group">
                     <div class="difficulty-group" id="edit-difficulty-group">
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">🡇</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">&lt;&lt;&lt;</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="MEDIUM" onclick="setEditDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">🡅</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">&gt;&gt;&gt;</button>
                     </div>
                 </div>
 
@@ -912,11 +915,11 @@
             const allEasy = last3.length === 3 && last3.every(w => w.difficulty === 'EASY');
             const allHard = last3.length === 3 && last3.every(w => w.difficulty === 'HARD');
 
-            if (allEasy && btnUp) {
-                btnUp.classList.add('outline-up');
+            if (allEasy && btnDown) {
+                btnDown.classList.add('outline-down'); // Outlines >>> in black when EASY 3x in a row
             }
-            if (allHard && btnDown) {
-                btnDown.classList.add('outline-down');
+            if (allHard && btnUp) {
+                btnUp.classList.add('outline-up');     // Outlines <<< in black when HARD 3x in a row
             }
         }
 
