@@ -97,7 +97,7 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Difficulty Bar Selector (Connected Horizontal Bar with No Dividing Lines) */
+        /* Difficulty Bar Selector */
         .difficulty-group {
             display: flex;
             width: 100%;
@@ -115,7 +115,7 @@
             color: #64748b;
             border: none;
             font-weight: bold;
-            font-size: 0.75em;
+            font-size: 0.85em;
             cursor: pointer;
             text-align: center;
             margin-top: 0;
@@ -126,10 +126,12 @@
             position: relative;
         }
         
-        /* Updated Active Selected Colors: Red, Orange, Yellow, Green, Bright Green */
+        /* Updated Active Selected Colors: Red Down Arrow, Orange, Yellow, Green, Blue Up Arrow */
         .diff-btn[data-diff="up"].selected {
             background: #ef4444; /* Red */
-            color: white;
+            color: #000000;      /* Black Font */
+            box-shadow: inset 0 0 0 2px #000000; /* Black Outline */
+            z-index: 2;
         }
         .diff-btn[data-diff="HARD"].selected {
             background: #f97316; /* Orange */
@@ -144,13 +146,15 @@
             color: white;
         }
         .diff-btn[data-diff="down"].selected {
-            background: #4ade80; /* Bright Green */
-            color: #0f172a;
+            background: #3b82f6; /* Blue */
+            color: #000000;      /* Black Font */
+            box-shadow: inset 0 0 0 2px #000000; /* Black Outline */
+            z-index: 2;
         }
 
         /* Outlines for 3-in-a-row streak */
         .diff-btn.outline-down {
-            box-shadow: inset 0 0 0 2px #4ade80;
+            box-shadow: inset 0 0 0 2px #3b82f6;
             z-index: 5;
         }
         .diff-btn.outline-up {
@@ -469,14 +473,14 @@
                     </div>
                 </div>
 
-                <!-- Difficulty Scale Bar (Connected Horizontal Bar: TOO HARD on Left, TOO EASY on Right) -->
+                <!-- Difficulty Scale Bar -->
                 <div class="form-group">
                     <div class="difficulty-group" id="difficulty-group">
-                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">TOO HARD</button>
+                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">🡇</button>
                         <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn" data-diff="MEDIUM" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">TOO EASY</button>
+                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">🡅</button>
                     </div>
                 </div>
 
@@ -613,11 +617,11 @@
 
                 <div class="form-group">
                     <div class="difficulty-group" id="edit-difficulty-group">
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">TOO HARD</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">🡇</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="MEDIUM" onclick="setEditDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">TOO EASY</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">🡅</button>
                     </div>
                 </div>
 
@@ -877,7 +881,7 @@
         // Toggleable / Optional Difficulty Selection with Return-To-Default on Deselect
         function setDifficulty(diff) {
             if (selectedDifficulty === diff) {
-                selectedDifficulty = null; // Unselect if clicked again (reverts to default)
+                selectedDifficulty = null; // Unselect if clicked again
             } else {
                 selectedDifficulty = diff;
             }
