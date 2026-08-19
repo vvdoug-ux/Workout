@@ -97,6 +97,76 @@
         }
         button:hover { background: #1d4ed8; }
 
+        /* Difficulty Bar Selector */
+        .difficulty-group {
+            display: flex;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .diff-btn {
+            flex: 1;
+            padding: 10px 0;
+            background: #f8fafc;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+            border-right: none;
+            font-weight: bold;
+            font-size: 0.85em;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 0;
+            transition: all 0.15s ease;
+            border-radius: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .diff-btn:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+        .diff-btn:last-child {
+            border-radius: 0 6px 6px 0;
+            border-right: 1px solid #cbd5e1;
+        }
+        /* Active Selected Colors */
+        .diff-btn[data-diff="down"].selected {
+            background: #8b5cf6;
+            color: white;
+            border-color: #8b5cf6;
+        }
+        .diff-btn[data-diff="HARD"].selected {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        .diff-btn[data-diff="MEDIUM"].selected {
+            background: #f97316;
+            color: white;
+            border-color: #f97316;
+        }
+        .diff-btn[data-diff="EASY"].selected {
+            background: #eab308;
+            color: white;
+            border-color: #eab308;
+        }
+        .diff-btn[data-diff="up"].selected {
+            background: #22c55e;
+            color: white;
+            border-color: #22c55e;
+        }
+        /* Outlines for 3-in-a-row streak */
+        .diff-btn.outline-down {
+            box-shadow: 0 0 0 3px #8b5cf6;
+            z-index: 5;
+            border-radius: 6px 0 0 6px !important;
+        }
+        .diff-btn.outline-up {
+            box-shadow: 0 0 0 3px #22c55e;
+            z-index: 5;
+            border-radius: 0 6px 6px 0 !important;
+        }
+
         /* Equipment Tag Selector in Log Section */
         .equip-select-group {
             display: flex;
@@ -404,6 +474,19 @@
                         <input type="number" id="reps" onfocus="this.select()" required>
                     </div>
                 </div>
+
+                <!-- Difficulty Scale Bar -->
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <div class="difficulty-group" id="difficulty-group">
+                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">↓</button>
+                        <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
+                        <button type="button" class="diff-btn" data-diff="MEDIUM" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
+                        <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
+                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">↑</button>
+                    </div>
+                </div>
+
                 <button type="submit">Save</button>
             </form>
         </div>
@@ -686,6 +769,7 @@
 
         let chartInstance = null;
         let selectedFormEquipment = "Bodyweight";
+        let selectedDifficulty = null;
         let activeDayModalExercise = null;
 
         const form = document.getElementById('workout-form');
@@ -712,10 +796,54 @@
             updateWeightFieldState();
         }
 
+        function setDifficulty(diff) {
+            if (selectedDifficulty === diff) {
+                selectedDifficulty = null; // deselect if clicked again
+            } else {
+                selectedDifficulty = diff;
+            }
+            updateDifficultyUI();
+        }
+
+        function updateDifficultyUI() {
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                if (btn.dataset.diff === selectedDifficulty) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        function checkDifficultyOutlines(sortedWorkoutsForEx) {
+            const btnDown = document.querySelector('.diff-btn[data-diff="down"]');
+            const btnUp = document.querySelector('.diff-btn[data-diff="up"]');
+
+            if (btnDown) btnDown.classList.remove('outline-down');
+            if (btnUp) btnUp.classList.remove('outline-up');
+
+            if (!sortedWorkoutsForEx || sortedWorkoutsForEx.length < 3) return;
+
+            const last3 = sortedWorkoutsForEx.slice(0, 3);
+
+            const allEasy = last3.length === 3 && last3.every(w => w.difficulty === 'EASY');
+            const allHard = last3.length === 3 && last3.every(w => w.difficulty === 'HARD');
+
+            if (allEasy && btnUp) {
+                btnUp.classList.add('outline-up');
+            }
+            if (allHard && btnDown) {
+                btnDown.classList.add('outline-down');
+            }
+        }
+
         function resetLogForm() {
             form.reset();
             document.getElementById('date').value = getPacificDateString();
             setFormEquipment("Bodyweight");
+            selectedDifficulty = null;
+            updateDifficultyUI();
+            checkDifficultyOutlines(null);
             updateStarButton();
         }
 
@@ -779,22 +907,42 @@
         }
 
         function autofillExerciseData(exName) {
-            if (!exName) return;
+            if (!exName) {
+                selectedDifficulty = null;
+                updateDifficultyUI();
+                checkDifficultyOutlines(null);
+                return;
+            }
+
             const matching = workouts.filter(w => w.exercise.toLowerCase() === exName.toLowerCase());
             
             if (matching.length > 0) {
-                const newest = matching.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+                const sorted = [...matching].sort((a, b) => (b.id || 0) - (a.id || 0));
+                const newest = sorted[0];
                 if (newest) {
                     weightInput.value = newest.weight;
                     document.getElementById('sets').value = newest.sets ? newest.sets : '';
                     document.getElementById('reps').value = newest.reps;
                     setFormEquipment(newest.equipment || getMeta(exName).defaultEquipment);
+
+                    // Find most recent entry that has a saved difficulty rating
+                    const newestWithDiff = sorted.find(w => w.difficulty);
+                    if (newestWithDiff) {
+                        selectedDifficulty = newestWithDiff.difficulty;
+                    } else {
+                        selectedDifficulty = null;
+                    }
+                    updateDifficultyUI();
+                    checkDifficultyOutlines(sorted);
                     return;
                 }
             }
 
             const meta = getMeta(exName);
             setFormEquipment(meta.defaultEquipment);
+            selectedDifficulty = null;
+            updateDifficultyUI();
+            checkDifficultyOutlines([]);
         }
 
         function updateWeightFieldState() {
@@ -851,6 +999,9 @@
                 document.getElementById('sets').value = '';
                 document.getElementById('reps').value = '';
                 setFormEquipment("Bodyweight");
+                selectedDifficulty = null;
+                updateDifficultyUI();
+                checkDifficultyOutlines(null);
             }
             updateStarButton();
         });
@@ -872,7 +1023,8 @@
                 equipment: selectedFormEquipment, 
                 weight, 
                 sets, 
-                reps 
+                reps,
+                difficulty: selectedDifficulty
             };
 
             workouts.push(newEntry);
@@ -1076,12 +1228,15 @@
                 renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
             } else if (activeGroupMode === 'groups') {
                 const categorized = {};
-                MUSCLE_GROUPS.forEach(mg => categorized[mg] = []);
+                // Exclude Push and Pull from Groups category headers
+                const groupsToDisplay = MUSCLE_GROUPS.filter(mg => mg !== 'Push' && mg !== 'Pull');
+                
+                groupsToDisplay.forEach(mg => categorized[mg] = []);
                 categorized["Uncategorized"] = [];
 
                 exercises.forEach(ex => {
                     const meta = getMeta(ex);
-                    const activeGroups = (meta.muscleGroups || []).filter(mg => MUSCLE_GROUPS.includes(mg));
+                    const activeGroups = (meta.muscleGroups || []).filter(mg => groupsToDisplay.includes(mg));
 
                     if (activeGroups.length > 0) {
                         [...new Set(activeGroups)].forEach(mg => {
@@ -1092,7 +1247,7 @@
                     }
                 });
 
-                renderCategoryGroups(container, categorized, [...MUSCLE_GROUPS, "Uncategorized"], todayStr);
+                renderCategoryGroups(container, categorized, [...groupsToDisplay, "Uncategorized"], todayStr);
             } else {
                 // Neither Groups nor Muscles selected -> Display alphabetically with no category labels
                 exercises.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
