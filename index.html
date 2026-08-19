@@ -97,66 +97,64 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Difficulty Bar Selector (No Vertical Dividers / Gap Layout) */
+        /* Difficulty Bar Selector (Connected Horizontal Bar with No Dividing Lines) */
         .difficulty-group {
             display: flex;
             width: 100%;
             margin-top: 5px;
-            gap: 6px;
+            gap: 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #f8fafc;
         }
         .diff-btn {
             flex: 1;
             padding: 10px 2px;
-            background: #f8fafc;
+            background: transparent;
             color: #64748b;
-            border: 1px solid #cbd5e1;
+            border: none;
             font-weight: bold;
             font-size: 0.75em;
             cursor: pointer;
             text-align: center;
             margin-top: 0;
             transition: all 0.15s ease;
-            border-radius: 6px;
             user-select: none;
             -webkit-user-select: none;
             box-sizing: border-box;
             position: relative;
         }
         
-        /* Updated Active Selected Colors: Purple, Red, Yellow, Green, Blue */
-        .diff-btn[data-diff="down"].selected {
-            background: #8b5cf6;
+        /* Updated Active Selected Colors: Red, Orange, Yellow, Green, Bright Green */
+        .diff-btn[data-diff="up"].selected {
+            background: #ef4444; /* Red */
             color: white;
-            border-color: #8b5cf6;
         }
         .diff-btn[data-diff="HARD"].selected {
-            background: #ef4444;
+            background: #f97316; /* Orange */
             color: white;
-            border-color: #ef4444;
         }
         .diff-btn[data-diff="MEDIUM"].selected {
-            background: #eab308;
+            background: #eab308; /* Yellow */
             color: white;
-            border-color: #eab308;
         }
         .diff-btn[data-diff="EASY"].selected {
-            background: #22c55e;
+            background: #22c55e; /* Green */
             color: white;
-            border-color: #22c55e;
         }
-        .diff-btn[data-diff="up"].selected {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
+        .diff-btn[data-diff="down"].selected {
+            background: #4ade80; /* Bright Green */
+            color: #0f172a;
         }
 
         /* Outlines for 3-in-a-row streak */
         .diff-btn.outline-down {
-            box-shadow: 0 0 0 3px #8b5cf6;
+            box-shadow: inset 0 0 0 2px #4ade80;
             z-index: 5;
         }
         .diff-btn.outline-up {
-            box-shadow: 0 0 0 3px #3b82f6;
+            box-shadow: inset 0 0 0 2px #ef4444;
             z-index: 5;
         }
 
@@ -471,14 +469,14 @@
                     </div>
                 </div>
 
-                <!-- Difficulty Scale Bar (Title Removed, TOO EASY / TOO HARD Labels) -->
+                <!-- Difficulty Scale Bar (Connected Horizontal Bar: TOO HARD on Left, TOO EASY on Right) -->
                 <div class="form-group">
                     <div class="difficulty-group" id="difficulty-group">
-                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">TOO EASY</button>
+                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">TOO HARD</button>
                         <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn" data-diff="MEDIUM" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">TOO HARD</button>
+                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">TOO EASY</button>
                     </div>
                 </div>
 
@@ -588,7 +586,8 @@
                 </div>
                 <div class="form-group">
                     <label>Exercise Name</label>
-                    <input type="text" id="edit-entry-exercise" required>
+                    <!-- Select Dropdown restricted to previously used exercises -->
+                    <select id="edit-entry-exercise" required></select>
                 </div>
 
                 <div class="equip-select-group">
@@ -614,11 +613,11 @@
 
                 <div class="form-group">
                     <div class="difficulty-group" id="edit-difficulty-group">
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">TOO EASY</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">TOO HARD</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="MEDIUM" onclick="setEditDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">TOO HARD</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">TOO EASY</button>
                     </div>
                 </div>
 
@@ -875,10 +874,10 @@
             updateWeightFieldState();
         }
 
-        // Toggleable / Optional Difficulty Selection
+        // Toggleable / Optional Difficulty Selection with Return-To-Default on Deselect
         function setDifficulty(diff) {
             if (selectedDifficulty === diff) {
-                selectedDifficulty = null; // Unselect if clicked again
+                selectedDifficulty = null; // Unselect if clicked again (reverts to default)
             } else {
                 selectedDifficulty = diff;
             }
@@ -1580,7 +1579,36 @@
             if (!entry) return;
 
             document.getElementById('edit-entry-date').value = entry.date;
-            document.getElementById('edit-entry-exercise').value = entry.exercise;
+            
+            // Restrict exercise select dropdown options ONLY to existing/previously used exercise names
+            const editExSelect = document.getElementById('edit-entry-exercise');
+            editExSelect.innerHTML = '';
+            
+            const existingExercises = [...new Set([
+                ...workouts.map(w => w.exercise),
+                ...Object.keys(exerciseMeta)
+            ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()))
+              .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+            existingExercises.forEach(ex => {
+                const opt = document.createElement('option');
+                opt.value = ex;
+                opt.textContent = ex;
+                if (ex.toLowerCase() === entry.exercise.toLowerCase()) {
+                    opt.selected = true;
+                }
+                editExSelect.appendChild(opt);
+            });
+
+            // Fallback if entry exercise was purged or removed
+            if (!existingExercises.some(ex => ex.toLowerCase() === entry.exercise.toLowerCase())) {
+                const opt = document.createElement('option');
+                opt.value = entry.exercise;
+                opt.textContent = entry.exercise;
+                opt.selected = true;
+                editExSelect.appendChild(opt);
+            }
+
             document.getElementById('edit-entry-weight').value = entry.weight !== undefined ? entry.weight : 0;
             document.getElementById('edit-entry-sets').value = entry.sets !== undefined ? entry.sets : '';
             document.getElementById('edit-entry-reps').value = entry.reps !== undefined ? entry.reps : '';
@@ -1626,7 +1654,7 @@
 
         function setEditDifficulty(diff) {
             if (editSelectedDifficulty === diff) {
-                editSelectedDifficulty = null;
+                editSelectedDifficulty = null; // Unselect if clicked again
             } else {
                 editSelectedDifficulty = diff;
             }
@@ -1648,7 +1676,7 @@
             if (!activeHistoryId) return;
 
             const date = document.getElementById('edit-entry-date').value;
-            const exercise = document.getElementById('edit-entry-exercise').value.trim();
+            const exercise = document.getElementById('edit-entry-exercise').value;
             const weightInput = document.getElementById('edit-entry-weight');
             const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
             const sets = parseInt(document.getElementById('edit-entry-sets').value);
