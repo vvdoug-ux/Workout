@@ -97,39 +97,33 @@
         }
         button:hover { background: #1d4ed8; }
 
-        /* Difficulty Bar Selector */
+        /* Difficulty Bar Selector (No Vertical Dividers / Gap Layout) */
         .difficulty-group {
             display: flex;
             width: 100%;
             margin-top: 5px;
+            gap: 6px;
         }
         .diff-btn {
             flex: 1;
-            padding: 10px 0;
+            padding: 10px 2px;
             background: #f8fafc;
             color: #64748b;
             border: 1px solid #cbd5e1;
-            border-right: none;
             font-weight: bold;
-            font-size: 0.85em;
+            font-size: 0.75em;
             cursor: pointer;
             text-align: center;
             margin-top: 0;
             transition: all 0.15s ease;
-            border-radius: 0;
+            border-radius: 6px;
             user-select: none;
             -webkit-user-select: none;
             box-sizing: border-box;
             position: relative;
         }
-        .diff-btn:first-child {
-            border-radius: 6px 0 0 6px;
-        }
-        .diff-btn:last-child {
-            border-radius: 0 6px 6px 0;
-            border-right: 1px solid #cbd5e1;
-        }
-        /* Active Selected Colors */
+        
+        /* Updated Active Selected Colors: Purple, Red, Yellow, Green, Blue */
         .diff-btn[data-diff="down"].selected {
             background: #8b5cf6;
             color: white;
@@ -141,30 +135,29 @@
             border-color: #ef4444;
         }
         .diff-btn[data-diff="MEDIUM"].selected {
-            background: #f97316;
-            color: white;
-            border-color: #f97316;
-        }
-        .diff-btn[data-diff="EASY"].selected {
             background: #eab308;
             color: white;
             border-color: #eab308;
         }
-        .diff-btn[data-diff="up"].selected {
+        .diff-btn[data-diff="EASY"].selected {
             background: #22c55e;
             color: white;
             border-color: #22c55e;
         }
+        .diff-btn[data-diff="up"].selected {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
         /* Outlines for 3-in-a-row streak */
         .diff-btn.outline-down {
             box-shadow: 0 0 0 3px #8b5cf6;
             z-index: 5;
-            border-radius: 6px 0 0 6px !important;
         }
         .diff-btn.outline-up {
-            box-shadow: 0 0 0 3px #22c55e;
+            box-shadow: 0 0 0 3px #3b82f6;
             z-index: 5;
-            border-radius: 0 6px 6px 0 !important;
         }
 
         /* Equipment Tag Selector in Log Section */
@@ -284,7 +277,7 @@
             border-color: #cbd5e1;
         }
 
-        /* Settings Modal Overlay & Context Modals */
+        /* Modals & Popups Overlay */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -421,8 +414,11 @@
             border-color: #2563eb;
         }
 
+        /* History Table Styles */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        tr.history-row { cursor: pointer; transition: background 0.15s; }
+        tr.history-row:hover { background: #f8fafc; }
         canvas { max-width: 100%; margin-top: 20px; }
     </style>
 </head>
@@ -475,15 +471,14 @@
                     </div>
                 </div>
 
-                <!-- Difficulty Scale Bar -->
+                <!-- Difficulty Scale Bar (Title Removed, TOO EASY / TOO HARD Labels) -->
                 <div class="form-group">
-                    <label>Difficulty</label>
                     <div class="difficulty-group" id="difficulty-group">
-                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">↓</button>
+                        <button type="button" class="diff-btn" data-diff="down" onclick="setDifficulty('down')">TOO EASY</button>
                         <button type="button" class="diff-btn" data-diff="HARD" onclick="setDifficulty('HARD')">HARD</button>
                         <button type="button" class="diff-btn" data-diff="MEDIUM" onclick="setDifficulty('MEDIUM')">MEDIUM</button>
                         <button type="button" class="diff-btn" data-diff="EASY" onclick="setDifficulty('EASY')">EASY</button>
-                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">↑</button>
+                        <button type="button" class="diff-btn" data-diff="up" onclick="setDifficulty('up')">TOO HARD</button>
                     </div>
                 </div>
 
@@ -545,9 +540,10 @@
         <canvas id="progressChart"></canvas>
     </div>
 
-    <!-- History Table Tab -->
+    <!-- History Table Tab (Long-press to Edit/Delete) -->
     <div id="section-history" class="card tab-content">
         <h2>History</h2>
+        <p style="font-size: 0.85em; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Long-press or right-click an entry to edit or delete it.</p>
         <table id="history-table">
             <thead>
                 <tr>
@@ -556,11 +552,82 @@
                     <th>Weight</th>
                     <th>Sets</th>
                     <th>Reps</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
+    </div>
+
+    <!-- History Action Choice Modal (Long-Press Menu) -->
+    <div id="history-action-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 360px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 1.1em;">Log Entry Actions</h3>
+                <button class="close-modal-btn" onclick="closeHistoryActionModal()">&times;</button>
+            </div>
+            <p style="font-size: 0.9em; color: #64748b; margin-top: 0; margin-bottom: 16px;">What would you like to do with this entry?</p>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" onclick="openEditEntryModalFromAction()" style="background: #2563eb; color: white;">Edit Entry</button>
+                <button type="button" onclick="deleteEntryFromAction()" style="background: #ef4444; color: white;">Delete Entry</button>
+                <button type="button" onclick="closeHistoryActionModal()" style="background: #e2e8f0; color: #475569;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Edit Entry Popup Modal -->
+    <div id="edit-entry-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2 style="margin: 0; font-size: 1.25em;">Edit Log Entry</h2>
+                <button class="close-modal-btn" onclick="closeEditEntryModal()">&times;</button>
+            </div>
+            <form id="edit-entry-form" onsubmit="saveEditedEntry(event)">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="edit-entry-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Exercise Name</label>
+                    <input type="text" id="edit-entry-exercise" required>
+                </div>
+
+                <div class="equip-select-group">
+                    <button type="button" class="equip-btn edit-equip-btn" data-equip="Bodyweight" onclick="setEditEquipment('Bodyweight')">Bodyweight</button>
+                    <button type="button" class="equip-btn edit-equip-btn" data-equip="Barbell" onclick="setEditEquipment('Barbell')">Barbell</button>
+                    <button type="button" class="equip-btn edit-equip-btn" data-equip="Dumbbells" onclick="setEditEquipment('Dumbbells')">Dumbbells</button>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Weight</label>
+                        <input type="number" id="edit-entry-weight" step="0.5">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Sets</label>
+                        <input type="number" id="edit-entry-sets" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Reps</label>
+                        <input type="number" id="edit-entry-reps" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="difficulty-group" id="edit-difficulty-group">
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="down" onclick="setEditDifficulty('down')">TOO EASY</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="HARD" onclick="setEditDifficulty('HARD')">HARD</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="MEDIUM" onclick="setEditDifficulty('MEDIUM')">MEDIUM</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="EASY" onclick="setEditDifficulty('EASY')">EASY</button>
+                        <button type="button" class="diff-btn edit-diff-btn" data-diff="up" onclick="setEditDifficulty('up')">TOO HARD</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" style="flex: 1; margin-top: 0;">Save Changes</button>
+                    <button type="button" onclick="closeEditEntryModal()" style="flex: 1; margin-top: 0; background: #e2e8f0; color: #475569;">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -600,6 +667,13 @@
     </div>
 
     <script>
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
         function getPacificDateString() {
             return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
@@ -686,6 +760,11 @@
         let renamedPresets = JSON.parse(localStorage.getItem('renamedPresets')) || {};
         let deletedPresets = JSON.parse(localStorage.getItem('deletedPresets')) || [];
 
+        // History Actions / Editing State
+        let activeHistoryId = null;
+        let editSelectedEquipment = "Bodyweight";
+        let editSelectedDifficulty = null;
+
         // Purge requested exercises from storage completely
         function purgeRemovedExercises() {
             PURGED_EXERCISES.forEach(pEx => {
@@ -703,12 +782,12 @@
         }
 
         // Favorites / List Filter States
-        let activeViewFilter = 'favorites'; // 'favorites' or 'all'
-        let activeGroupMode = localStorage.getItem('activeGroupMode') || null; // 'groups', 'muscles', or null
+        let activeViewFilter = 'favorites'; 
+        let activeGroupMode = localStorage.getItem('activeGroupMode') || null; 
         if (activeGroupMode === 'null' || activeGroupMode === 'undefined') activeGroupMode = null;
 
-        let activeCategoryFilter = null;   // Row 2: null, 'Leg Day', 'Arm Day', 'Core', 'Push', 'Pull'
-        let activeDayFilter = null;        // Row 3: null, 'Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'
+        let activeCategoryFilter = null;   
+        let activeDayFilter = null;        
 
         function normalizeArray(data) {
             if (!data) return [];
@@ -717,7 +796,7 @@
             return [];
         }
 
-        // Initialize preset metadata, maintaining locked tags & names
+        // Initialize preset metadata
         function initPresetMetadata() {
             purgeRemovedExercises();
 
@@ -785,7 +864,7 @@
         function setFormEquipment(equipTag) {
             selectedFormEquipment = equipTag || "Bodyweight";
             
-            document.querySelectorAll('.equip-btn').forEach(btn => {
+            document.querySelectorAll('#workout-form .equip-btn').forEach(btn => {
                 if (btn.dataset.equip === selectedFormEquipment) {
                     btn.classList.add('selected');
                 } else {
@@ -796,9 +875,10 @@
             updateWeightFieldState();
         }
 
+        // Toggleable / Optional Difficulty Selection
         function setDifficulty(diff) {
             if (selectedDifficulty === diff) {
-                selectedDifficulty = null; // deselect if clicked again
+                selectedDifficulty = null; // Unselect if clicked again
             } else {
                 selectedDifficulty = diff;
             }
@@ -806,7 +886,7 @@
         }
 
         function updateDifficultyUI() {
-            document.querySelectorAll('.diff-btn').forEach(btn => {
+            document.querySelectorAll('#difficulty-group .diff-btn').forEach(btn => {
                 if (btn.dataset.diff === selectedDifficulty) {
                     btn.classList.add('selected');
                 } else {
@@ -816,8 +896,8 @@
         }
 
         function checkDifficultyOutlines(sortedWorkoutsForEx) {
-            const btnDown = document.querySelector('.diff-btn[data-diff="down"]');
-            const btnUp = document.querySelector('.diff-btn[data-diff="up"]');
+            const btnDown = document.querySelector('#difficulty-group .diff-btn[data-diff="down"]');
+            const btnUp = document.querySelector('#difficulty-group .diff-btn[data-diff="up"]');
 
             if (btnDown) btnDown.classList.remove('outline-down');
             if (btnUp) btnUp.classList.remove('outline-up');
@@ -925,7 +1005,6 @@
                     document.getElementById('reps').value = newest.reps;
                     setFormEquipment(newest.equipment || getMeta(exName).defaultEquipment);
 
-                    // Find most recent entry that has a saved difficulty rating
                     const newestWithDiff = sorted.find(w => w.difficulty);
                     if (newestWithDiff) {
                         selectedDifficulty = newestWithDiff.difficulty;
@@ -1037,14 +1116,6 @@
         filter.addEventListener('change', updateChart);
         timeframeFilter.addEventListener('change', updateChart);
 
-        function deleteEntry(id) {
-            if (confirm("Are you sure you want to delete this set?")) {
-                workouts = workouts.filter(w => w.id !== id);
-                localStorage.setItem('workouts', JSON.stringify(workouts));
-                updateUI();
-            }
-        }
-
         function selectFavorite(exName) {
             exerciseInput.value = exName;
             autofillExerciseData(exName);
@@ -1061,7 +1132,7 @@
 
         function toggleGroupMode(mode) {
             if (activeGroupMode === mode) {
-                activeGroupMode = null; // Toggle off if clicked again
+                activeGroupMode = null;
             } else {
                 activeGroupMode = mode;
             }
@@ -1076,13 +1147,12 @@
             updateFavoritesList();
         }
 
-        // Mutual exclusivity between Row 2 (Category Filter) and Row 3 (Day Filter)
         function setCategoryFilter(cat) {
             if (activeCategoryFilter === cat) {
-                activeCategoryFilter = null; // Deselect if clicked again
+                activeCategoryFilter = null;
             } else {
                 activeCategoryFilter = cat;
-                activeDayFilter = null; // Deselect day filter if category selected
+                activeDayFilter = null;
             }
             updateFilterButtons();
             updateFavoritesList();
@@ -1090,10 +1160,10 @@
 
         function setDayFilter(day) {
             if (activeDayFilter === day) {
-                activeDayFilter = null; // Deselect if clicked again
+                activeDayFilter = null;
             } else {
                 activeDayFilter = day;
-                activeCategoryFilter = null; // Deselect category filter if day selected
+                activeCategoryFilter = null;
             }
             updateFilterButtons();
             updateFavoritesList();
@@ -1168,12 +1238,10 @@
                 ...Object.keys(exerciseMeta)
             ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()));
 
-            // Filter Row 1: Favorites vs All
             if (activeViewFilter === 'favorites') {
                 exercises = exercises.filter(ex => getMeta(ex).favorite);
             }
 
-            // Filter Row 2 or Row 3 (Mutually Exclusive Filter)
             if (activeCategoryFilter) {
                 exercises = exercises.filter(ex => {
                     const meta = getMeta(ex);
@@ -1206,7 +1274,6 @@
 
             const todayStr = getPacificDateString();
 
-            // Display Categorization Logic (Groups vs Muscles vs Flat Alphabetical)
             if (activeGroupMode === 'muscles') {
                 const categorized = {};
                 MUSCLES_GENERAL.forEach(m => categorized[m] = []);
@@ -1228,7 +1295,6 @@
                 renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
             } else if (activeGroupMode === 'groups') {
                 const categorized = {};
-                // Exclude Push and Pull from Groups category headers
                 const groupsToDisplay = MUSCLE_GROUPS.filter(mg => mg !== 'Push' && mg !== 'Pull');
                 
                 groupsToDisplay.forEach(mg => categorized[mg] = []);
@@ -1249,7 +1315,6 @@
 
                 renderCategoryGroups(container, categorized, [...groupsToDisplay, "Uncategorized"], todayStr);
             } else {
-                // Neither Groups nor Muscles selected -> Display alphabetically with no category labels
                 exercises.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
                 const gridDiv = document.createElement('div');
@@ -1280,17 +1345,17 @@
             }
         }
 
-        /* Attach Long-Press Event Listeners to Exercise Buttons */
+        /* Long-Press for Exercise Favorite Buttons */
         function attachLongPress(btn, exName) {
             let timer = null;
             let isLongPress = false;
 
-            const start = (e) => {
+            const start = () => {
                 isLongPress = false;
                 timer = setTimeout(() => {
                     isLongPress = true;
                     openDayModal(exName);
-                }, 450); // 450ms long press threshold
+                }, 450);
             };
 
             const cancel = () => {
@@ -1370,7 +1435,7 @@
             });
         }
 
-        /* --- Quick Long-Press Day Schedule Modal Logic --- */
+        /* Day Schedule Modal Logic */
         function openDayModal(exName) {
             activeDayModalExercise = exName;
             document.getElementById('day-modal-title').textContent = `Assign Days: ${exName}`;
@@ -1429,6 +1494,7 @@
             updateChart();
         }
 
+        /* --- History Section Long Press & Editing --- */
         function updateTable() {
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
@@ -1437,18 +1503,178 @@
             
             sorted.forEach(w => {
                 const tr = document.createElement('tr');
+                tr.className = 'history-row';
                 const displaySets = w.sets ? w.sets : '-';
                 
                 tr.innerHTML = `
-                    <td>${w.date}</td>
-                    <td>${w.exercise}</td>
+                    <td>${escapeHtml(w.date)}</td>
+                    <td>${escapeHtml(w.exercise)}</td>
                     <td>${w.weight}</td>
                     <td>${displaySets}</td>
                     <td>${w.reps}</td>
-                    <td><button class="delete-btn" onclick="deleteEntry(${w.id})">X</button></td>
                 `;
+
+                attachHistoryLongPress(tr, w.id);
                 tbody.appendChild(tr);
             });
+        }
+
+        function attachHistoryLongPress(rowElement, entryId) {
+            let timer = null;
+            let isLongPress = false;
+
+            const start = () => {
+                isLongPress = false;
+                timer = setTimeout(() => {
+                    isLongPress = true;
+                    openHistoryActionModal(entryId);
+                }, 450);
+            };
+
+            const cancel = () => {
+                if (timer) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
+            };
+
+            rowElement.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                openHistoryActionModal(entryId);
+            });
+
+            rowElement.addEventListener('mousedown', start);
+            rowElement.addEventListener('touchstart', start, { passive: true });
+
+            rowElement.addEventListener('mouseup', cancel);
+            rowElement.addEventListener('mouseleave', cancel);
+            rowElement.addEventListener('touchend', cancel);
+            rowElement.addEventListener('touchcancel', cancel);
+        }
+
+        function openHistoryActionModal(id) {
+            activeHistoryId = id;
+            document.getElementById('history-action-modal').classList.add('active');
+        }
+
+        function closeHistoryActionModal() {
+            document.getElementById('history-action-modal').classList.remove('active');
+        }
+
+        function deleteEntryFromAction() {
+            if (activeHistoryId) {
+                workouts = workouts.filter(w => w.id !== activeHistoryId);
+                localStorage.setItem('workouts', JSON.stringify(workouts));
+                updateUI();
+                closeHistoryActionModal();
+                activeHistoryId = null;
+            }
+        }
+
+        function openEditEntryModalFromAction() {
+            const idToEdit = activeHistoryId;
+            closeHistoryActionModal();
+            if (!idToEdit) return;
+
+            const entry = workouts.find(w => w.id === idToEdit);
+            if (!entry) return;
+
+            document.getElementById('edit-entry-date').value = entry.date;
+            document.getElementById('edit-entry-exercise').value = entry.exercise;
+            document.getElementById('edit-entry-weight').value = entry.weight !== undefined ? entry.weight : 0;
+            document.getElementById('edit-entry-sets').value = entry.sets !== undefined ? entry.sets : '';
+            document.getElementById('edit-entry-reps').value = entry.reps !== undefined ? entry.reps : '';
+
+            setEditEquipment(entry.equipment || 'Bodyweight');
+            editSelectedDifficulty = entry.difficulty || null;
+            updateEditDifficultyUI();
+
+            document.getElementById('edit-entry-modal').classList.add('active');
+        }
+
+        function closeEditEntryModal() {
+            document.getElementById('edit-entry-modal').classList.remove('active');
+            activeHistoryId = null;
+        }
+
+        function setEditEquipment(equip) {
+            editSelectedEquipment = equip || 'Bodyweight';
+            document.querySelectorAll('.edit-equip-btn').forEach(btn => {
+                if (btn.dataset.equip === editSelectedEquipment) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            const wInput = document.getElementById('edit-entry-weight');
+            if (editSelectedEquipment === 'Bodyweight') {
+                wInput.disabled = true;
+                wInput.value = '0';
+                wInput.required = false;
+                wInput.style.backgroundColor = '#e2e8f0';
+                wInput.style.color = '#94a3b8';
+                wInput.style.cursor = 'not-allowed';
+            } else {
+                wInput.disabled = false;
+                wInput.required = true;
+                wInput.style.backgroundColor = '';
+                wInput.style.color = '';
+                wInput.style.cursor = '';
+            }
+        }
+
+        function setEditDifficulty(diff) {
+            if (editSelectedDifficulty === diff) {
+                editSelectedDifficulty = null;
+            } else {
+                editSelectedDifficulty = diff;
+            }
+            updateEditDifficultyUI();
+        }
+
+        function updateEditDifficultyUI() {
+            document.querySelectorAll('.edit-diff-btn').forEach(btn => {
+                if (btn.dataset.diff === editSelectedDifficulty) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        function saveEditedEntry(e) {
+            e.preventDefault();
+            if (!activeHistoryId) return;
+
+            const date = document.getElementById('edit-entry-date').value;
+            const exercise = document.getElementById('edit-entry-exercise').value.trim();
+            const weightInput = document.getElementById('edit-entry-weight');
+            const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
+            const sets = parseInt(document.getElementById('edit-entry-sets').value);
+            const reps = parseInt(document.getElementById('edit-entry-reps').value);
+
+            ensureMeta(exercise);
+
+            workouts = workouts.map(w => {
+                if (w.id === activeHistoryId) {
+                    return {
+                        ...w,
+                        date,
+                        exercise,
+                        equipment: editSelectedEquipment,
+                        weight,
+                        sets,
+                        reps,
+                        difficulty: editSelectedDifficulty
+                    };
+                }
+                return w;
+            });
+
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            updateUI();
+            closeEditEntryModal();
         }
 
         function updateExerciseLists() {
@@ -1565,7 +1791,7 @@
             });
         }
 
-        /* --- Settings Modal Logic --- */
+        /* Settings Modal Logic */
         function openSettings() {
             resetLogForm();
             renderSettingsList();
