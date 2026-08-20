@@ -492,8 +492,8 @@
         <div class="card">
             <!-- Row 1: View Filter Buttons & Categorization Mode -->
             <div class="filter-row" style="gap: 4px;">
-                <button type="button" class="filter-btn sub-btn active" id="btn-view-favorites" onclick="setViewFilter('favorites')">Favorites</button>
-                <button type="button" class="filter-btn sub-btn" id="btn-view-all" onclick="setViewFilter('all')">All</button>
+                <button type="button" class="filter-btn sub-btn active" id="btn-view-all" onclick="setViewFilter('all')">All</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-view-favorites" onclick="setViewFilter('favorites')">Favorites</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-group-groups" onclick="toggleGroupMode('groups')">Groups</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-group-muscles" onclick="toggleGroupMode('muscles')">Muscles</button>
             </div>
@@ -698,7 +698,7 @@
         const PURGED_EXERCISES = [
             "Tricep Extensions", "Side Plank", "Side Crunches", "Romanian Deadlifts", 
             "Reverse Plank", "Hanging Leg Raises", "Floor Leg Raises", "Dips",
-            "Dips (narrow)", "Dips (wide)", "Crunches (side)", "Plank (side)", 
+            "Crunches (side)", "Plank (side)", 
             "Plank (reverse)", "Leg Raises (floor)", "Leg Raises (hanging)", "Deadlifts (romanian)"
         ];
 
@@ -724,10 +724,10 @@
             "Bicep Curls": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Pull"], musclesGeneral: ["Biceps"], isLocked: true },
             "Skull Crushers": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
             "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Legs"], musclesGeneral: ["Quads"], isLocked: true },
-            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Pull", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
-            "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids", "Traps"], isLocked: true },
+            "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids"], isLocked: true },
             "Shrugs": { defaultEquipment: "Barbell", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Traps"], isLocked: true },
             "Farmer Carries": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms"], musclesGeneral: ["Forearms"], isLocked: true },
             "Upright Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Traps"], isLocked: true },
@@ -739,7 +739,7 @@
             "Glute Bridge": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Glutes"], isLocked: true },
             "Lunges": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true },
             "Calf Raises": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Calves"], isLocked: true },
-            "Nordic Hamstring Curls": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true },
+            "Hamstring Curls (nordic)": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true },
             "Floor Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Bird Dogs": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Lower Back"], isLocked: true },
             "Russian Twists": { defaultEquipment: "Dumbbells", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
@@ -755,7 +755,13 @@
             "Donkey Kicks": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Glutes"], isLocked: true },
             "Squats (bulgarian split)": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true },
             "Wall Sit": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
-            "Tuck Jumps": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true }
+            "Tuck Jumps": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true },
+            "Overhead Tricep Extension": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
+            "Hamstring Curls (standing)": { defaultEquipment: "Dumbbells", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true },
+            "Dead Bugs": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Dips (chair)": { defaultEquipment: "Bodyweight", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
+            "Dips (wide)": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
+            "Dips (narrow)": { defaultEquipment: "Bodyweight", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true }
         };
 
         // Load existing data from browser storage
@@ -794,8 +800,8 @@
             saveMeta();
         }
 
-        // Favorites / List Filter States
-        let activeViewFilter = 'favorites'; 
+        // Favorites / List Filter States (with localStorage tracking)
+        let activeViewFilter = localStorage.getItem('activeViewFilter') || 'all'; 
         let activeGroupMode = localStorage.getItem('activeGroupMode') || null; 
         if (activeGroupMode === 'null' || activeGroupMode === 'undefined') activeGroupMode = null;
 
@@ -1280,6 +1286,7 @@
         /* --- Filter Controls Logic --- */
         function setViewFilter(mode) {
             activeViewFilter = mode;
+            localStorage.setItem('activeViewFilter', mode);
             updateFilterButtons();
             updateFavoritesList();
         }
