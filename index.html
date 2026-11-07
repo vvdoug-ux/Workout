@@ -743,9 +743,16 @@
             "Tuck Jumps": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true }
         };
 
-        // Load existing data from browser storage
+        // Load existing data from browser storage and sanitize stale lock flags
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
+        
+        // Automatically sanitize exerciseMeta on startup so non-preset exercises are never incorrectly locked
+        Object.keys(exerciseMeta).forEach(k => {
+            const isPreset = Object.keys(PRESET_EXERCISES).some(p => p.toLowerCase() === k.toLowerCase());
+            exerciseMeta[k].isLocked = isPreset;
+        });
+
         let renamedPresets = JSON.parse(localStorage.getItem('renamedPresets')) || {};
         
         let deletedPresets = JSON.parse(localStorage.getItem('deletedPresets'));
