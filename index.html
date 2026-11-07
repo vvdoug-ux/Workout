@@ -433,7 +433,7 @@
         <button class="tab-btn active" onclick="switchTab('log')">Log Exercise</button>
         <button class="tab-btn" onclick="switchTab('tracker')">Progress</button>
         <button class="tab-btn" onclick="switchTab('history')">History</button>
-        <button class="tab-btn settings-tab-btn" onclick="openSettings()" title="Settings">⚙️</button>
+        <button class="tab-btn settings-tab-btn" onclick="switchTab('settings')" title="Settings">⚙️</button>
     </div>
 
     <!-- Log Exercise Section -->
@@ -560,6 +560,20 @@
         </table>
     </div>
 
+    <!-- Exercise Settings Tab Section -->
+    <div id="section-settings" class="card tab-content">
+        <h2>Exercise Settings</h2>
+        <!-- Add New Exercise Input Form -->
+        <div class="add-exercise-box">
+            <label style="font-weight: bold; font-size: 0.9em; margin-bottom: 6px; display: block;">Add New Exercise</label>
+            <form id="add-exercise-form" onsubmit="addNewExerciseFromSettings(event)" style="display: flex; gap: 8px;">
+                <input type="text" id="new-exercise-input" placeholder="Enter exercise name..." style="flex: 1;" required>
+                <button type="submit" style="width: auto; margin-top: 0; padding: 0 16px; font-size: 0.9em; white-space: nowrap;">+ Add</button>
+            </form>
+        </div>
+        <div id="settings-exercise-list"></div>
+    </div>
+
     <!-- History Action Choice Modal (Long-Press Menu) -->
     <div id="history-action-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 360px;">
@@ -631,27 +645,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Exercise Settings</h2>
-                <button class="close-modal-btn" onclick="closeSettings()">&times;</button>
-            </div>
-
-            <!-- Add New Exercise Input Form -->
-            <div class="add-exercise-box">
-                <label style="font-weight: bold; font-size: 0.9em; margin-bottom: 6px; display: block;">Add New Exercise</label>
-                <form id="add-exercise-form" onsubmit="addNewExerciseFromSettings(event)" style="display: flex; gap: 8px;">
-                    <input type="text" id="new-exercise-input" placeholder="Enter exercise name..." style="flex: 1;" required>
-                    <button type="submit" style="width: auto; margin-top: 0; padding: 0 16px; font-size: 0.9em; white-space: nowrap;">+ Add</button>
-                </form>
-            </div>
-
-            <div id="settings-exercise-list"></div>
-        </div>
-    </div>
-
     <!-- Quick Long-Press Day Schedule Modal -->
     <div id="day-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 380px;">
@@ -694,8 +687,8 @@
         // Available Days of Week
         const DAYS_OF_WEEK = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
 
-        // List of exercises explicitly removed by user request
-        const PURGED_EXERCISES = [
+        // Initial default hidden/purged exercises (seeded into localStorage on first load)
+        const INITIAL_PURGED = [
             "Tricep Extensions", "Side Crunches", "Hanging Leg Raises", 
             "Floor Leg Raises", "Crunches (side)", "Leg Raises (floor)", "Leg Raises (hanging)",
             "Nordic Hamstring Curls"
@@ -724,6 +717,7 @@
             "Skull Crushers": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
             "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Legs"], musclesGeneral: ["Quads"], isLocked: true },
             "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Front Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
             "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids"], isLocked: true },
@@ -765,37 +759,31 @@
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
         let renamedPresets = JSON.parse(localStorage.getItem('renamedPresets')) || {};
-        let deletedPresets = JSON.parse(localStorage.getItem('deletedPresets')) || [];
+        
+        let deletedPresets = JSON.parse(localStorage.getItem('deletedPresets'));
+        if (!deletedPresets) {
+            deletedPresets = [...INITIAL_PURGED];
+            localStorage.setItem('deletedPresets', JSON.stringify(deletedPresets));
+        } else {
+            deletedPresets = deletedPresets.filter(d => 
+                !Object.keys(PRESET_EXERCISES).some(p => p.toLowerCase() === d.toLowerCase())
+            );
+            localStorage.setItem('deletedPresets', JSON.stringify(deletedPresets));
+        }
 
         // History Actions / Editing State
         let activeHistoryId = null;
         let editSelectedEquipment = "Bodyweight";
 
         // Log Form Difficulty State
-        let selectedDifficultyType = null;  // 'HARD', 'BALANCED', 'EASY'
-        let selectedDifficultyStage = 0;    // 0 = unselected, 1 = selected, 2 = alternate word
-        let selectedDifficulty = null;     // Value saved to database entry
+        let selectedDifficultyType = null;  
+        let selectedDifficultyStage = 0;    
+        let selectedDifficulty = null;     
 
         // Edit Modal Difficulty State
         let editSelectedDiffType = null;
         let editSelectedDiffStage = 0;
         let editSelectedDifficulty = null;
-
-        // Purge requested exercises from storage completely
-        function purgeRemovedExercises() {
-            PURGED_EXERCISES.forEach(pEx => {
-                if (!deletedPresets.some(d => d.toLowerCase() === pEx.toLowerCase())) {
-                    deletedPresets.push(pEx);
-                }
-                Object.keys(exerciseMeta).forEach(k => {
-                    if (k.toLowerCase() === pEx.toLowerCase()) {
-                        delete exerciseMeta[k];
-                    }
-                });
-            });
-            localStorage.setItem('deletedPresets', JSON.stringify(deletedPresets));
-            saveMeta();
-        }
 
         // Favorites / List Filter States
         let activeViewFilter = 'favorites'; 
@@ -814,8 +802,6 @@
 
         // Initialize preset metadata
         function initPresetMetadata() {
-            purgeRemovedExercises();
-
             Object.keys(PRESET_EXERCISES).forEach(exName => {
                 if (deletedPresets.some(d => d.toLowerCase() === exName.toLowerCase())) {
                     return;
@@ -831,15 +817,9 @@
                 
                 if (existingKey) {
                     exerciseMeta[existingKey].isLocked = true;
-                    if (!exerciseMeta[existingKey].defaultEquipment) {
-                        exerciseMeta[existingKey].defaultEquipment = preset.defaultEquipment;
-                    }
-                    if (!exerciseMeta[existingKey].muscleGroups || exerciseMeta[existingKey].muscleGroups.length === 0) {
-                        exerciseMeta[existingKey].muscleGroups = [...preset.muscleGroups];
-                    }
-                    if (!exerciseMeta[existingKey].musclesGeneral || exerciseMeta[existingKey].musclesGeneral.length === 0) {
-                        exerciseMeta[existingKey].musclesGeneral = [...preset.musclesGeneral];
-                    }
+                    exerciseMeta[existingKey].defaultEquipment = preset.defaultEquipment;
+                    exerciseMeta[existingKey].muscleGroups = [...preset.muscleGroups];
+                    exerciseMeta[existingKey].musclesGeneral = [...preset.musclesGeneral];
                     if (!exerciseMeta[existingKey].days) {
                         exerciseMeta[existingKey].days = [];
                     }
@@ -911,7 +891,6 @@
                         selectedDifficulty = randomWord;
                     }
                 } else {
-                    // Third click completely unselects the button
                     selectedDifficultyType = null;
                     selectedDifficultyStage = 0;
                     selectedDifficulty = null;
@@ -964,7 +943,6 @@
             balBtn.classList.remove('selected');
             easyBtn.classList.remove('selected');
 
-            // Reset font colors to default
             hardBtn.style.color = '';
             easyBtn.style.color = '';
 
@@ -974,18 +952,14 @@
 
             if (selectedDifficultyType === 'HARD') {
                 hardBtn.classList.add('selected');
-                if (selectedDifficultyStage === 2) {
-                    hardBtn.style.color = 'black';
-                }
+                if (selectedDifficultyStage === 2) hardBtn.style.color = 'black';
             }
             if (selectedDifficultyType === 'BALANCED') {
                 balBtn.classList.add('selected');
             }
             if (selectedDifficultyType === 'EASY') {
                 easyBtn.classList.add('selected');
-                if (selectedDifficultyStage === 2) {
-                    easyBtn.style.color = 'black';
-                }
+                if (selectedDifficultyStage === 2) easyBtn.style.color = 'black';
             }
         }
 
@@ -1010,7 +984,6 @@
                         editSelectedDifficulty = randomWord;
                     }
                 } else {
-                    // Third click completely unselects the button
                     editSelectedDiffType = null;
                     editSelectedDiffStage = 0;
                     editSelectedDifficulty = null;
@@ -1063,7 +1036,6 @@
             balBtn.classList.remove('selected');
             easyBtn.classList.remove('selected');
 
-            // Reset font colors to default
             hardBtn.style.color = '';
             easyBtn.style.color = '';
 
@@ -1073,18 +1045,14 @@
 
             if (editSelectedDiffType === 'HARD') {
                 hardBtn.classList.add('selected');
-                if (editSelectedDiffStage === 2) {
-                    hardBtn.style.color = 'black';
-                }
+                if (editSelectedDiffStage === 2) hardBtn.style.color = 'black';
             }
             if (editSelectedDiffType === 'BALANCED') {
                 balBtn.classList.add('selected');
             }
             if (editSelectedDiffType === 'EASY') {
                 easyBtn.classList.add('selected');
-                if (editSelectedDiffStage === 2) {
-                    easyBtn.style.color = 'black';
-                }
+                if (editSelectedDiffStage === 2) easyBtn.style.color = 'black';
             }
         }
 
@@ -1115,7 +1083,15 @@
 
         function ensureMeta(exName) {
             if (!exName) return null;
-            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            
+            const lowerEx = exName.trim().toLowerCase();
+            const initialLen = deletedPresets.length;
+            deletedPresets = deletedPresets.filter(d => d.toLowerCase() !== lowerEx);
+            if (deletedPresets.length !== initialLen) {
+                localStorage.setItem('deletedPresets', JSON.stringify(deletedPresets));
+            }
+
+            const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === lowerEx);
             if (key) {
                 exerciseMeta[key].muscleGroups = normalizeArray(exerciseMeta[key].muscleGroups);
                 exerciseMeta[key].musclesGeneral = normalizeArray(exerciseMeta[key].musclesGeneral || exerciseMeta[key].muscles);
@@ -1138,7 +1114,7 @@
             }
 
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.top-header .tab-btn:not(.settings-tab-btn)').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.top-header .tab-btn').forEach(el => el.classList.remove('active'));
 
             const buttons = document.querySelectorAll('.top-header .tab-btn');
 
@@ -1152,6 +1128,10 @@
             } else if (tabName === 'history') {
                 document.getElementById('section-history').classList.add('active');
                 buttons[2].classList.add('active');
+            } else if (tabName === 'settings') {
+                document.getElementById('section-settings').classList.add('active');
+                buttons[3].classList.add('active');
+                renderSettingsList();
             }
         }
 
@@ -1393,7 +1373,7 @@
             let exercises = [...new Set([
                 ...workouts.map(w => w.exercise),
                 ...Object.keys(exerciseMeta)
-            ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()));
+            ])].filter(ex => !deletedPresets.some(d => d.toLowerCase() === ex.toLowerCase()));
 
             if (activeViewFilter === 'favorites') {
                 exercises = exercises.filter(ex => getMeta(ex).favorite);
@@ -1649,6 +1629,9 @@
             updateFilterButtons();
             updateFavoritesList();
             updateChart();
+            if (document.getElementById('section-settings').classList.contains('active')) {
+                renderSettingsList();
+            }
         }
 
         /* --- History Section Long Press & Editing --- */
@@ -1744,7 +1727,7 @@
             const existingExercises = [...new Set([
                 ...workouts.map(w => w.exercise),
                 ...Object.keys(exerciseMeta)
-            ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()))
+            ])].filter(ex => !deletedPresets.some(d => d.toLowerCase() === ex.toLowerCase()))
               .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
             existingExercises.forEach(ex => {
@@ -1845,7 +1828,7 @@
             const exercises = [...new Set([
                 ...workouts.map(w => w.exercise),
                 ...Object.keys(exerciseMeta)
-            ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()))
+            ])].filter(ex => !deletedPresets.some(d => d.toLowerCase() === ex.toLowerCase()))
               .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
             
             const currentSelection = filter.value;
@@ -1955,17 +1938,6 @@
             });
         }
 
-        /* Settings Modal Logic */
-        function openSettings() {
-            resetLogForm();
-            renderSettingsList();
-            document.getElementById('settings-modal').classList.add('active');
-        }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.remove('active');
-        }
-
         function addNewExerciseFromSettings(e) {
             e.preventDefault();
             const input = document.getElementById('new-exercise-input');
@@ -2004,7 +1976,7 @@
             const allExercises = [...new Set([
                 ...workouts.map(w => w.exercise),
                 ...Object.keys(exerciseMeta)
-            ])].filter(ex => !PURGED_EXERCISES.some(p => p.toLowerCase() === ex.toLowerCase()))
+            ])].filter(ex => !deletedPresets.some(d => d.toLowerCase() === ex.toLowerCase()))
               .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
             if (allExercises.length === 0) {
@@ -2151,7 +2123,7 @@
 
             saveMeta();
             updateUI();
-            if (document.getElementById('settings-modal').classList.contains('active')) {
+            if (document.getElementById('section-settings').classList.contains('active')) {
                 renderSettingsList();
             }
         }
@@ -2176,7 +2148,7 @@
 
             saveMeta();
             updateUI();
-            if (document.getElementById('settings-modal').classList.contains('active')) {
+            if (document.getElementById('section-settings').classList.contains('active')) {
                 renderSettingsList();
             }
         }
