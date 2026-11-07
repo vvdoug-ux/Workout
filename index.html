@@ -114,7 +114,7 @@
             background: transparent;
             color: #64748b;
             border: none;
-            border-radius: 0; /* Middle button has no rounded corners */
+            border-radius: 0;
             font-family: inherit;
             font-weight: bold;
             font-size: 0.85em;
@@ -128,7 +128,6 @@
             position: relative;
         }
 
-        /* Hover & Focus state overrides for unselected difficulty buttons */
         .diff-btn:hover {
             background: #e2e8f0;
             color: #334155;
@@ -138,7 +137,6 @@
             background: transparent;
         }
 
-        /* Outer button corner rounding */
         .diff-btn[data-diff="HARD"] {
             border-radius: 6px 0 0 6px;
         }
@@ -146,17 +144,16 @@
             border-radius: 0 6px 6px 0;
         }
         
-        /* Active Selected Colors */
         .diff-btn[data-diff="HARD"].selected {
-            background: #ef4444; /* Red */
+            background: #ef4444;
             color: white;
         }
         .diff-btn[data-diff="BALANCED"].selected {
-            background: #eab308; /* Yellow */
+            background: #eab308;
             color: white;
         }
         .diff-btn[data-diff="EASY"].selected {
-            background: #22c55e; /* Green */
+            background: #22c55e;
             color: white;
         }
 
@@ -604,7 +601,6 @@
                 </div>
                 <div class="form-group">
                     <label>Exercise Name</label>
-                    <!-- Select Dropdown restricted to previously used exercises -->
                     <select id="edit-entry-exercise" required></select>
                 </div>
 
@@ -653,9 +649,7 @@
                 <button class="close-modal-btn" onclick="closeDayModal()">&times;</button>
             </div>
             <p style="font-size: 0.85em; color: #64748b; margin-top: 0; margin-bottom: 14px;">Select days of the week for this exercise:</p>
-            <div style="display: flex; gap: 4px; margin-bottom: 18px;" id="day-modal-buttons">
-                <!-- Su, M, Tu, W, Th, F, Sa buttons populated dynamically -->
-            </div>
+            <div style="display: flex; gap: 4px; margin-bottom: 18px;" id="day-modal-buttons"></div>
             <button type="button" onclick="closeDayModal()" style="margin-top: 0; user-select: none; -webkit-user-select: none;">Done</button>
         </div>
     </div>
@@ -681,20 +675,15 @@
             return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
         }
 
-        // Random words pool for BALANCED button alternate click state
         const BALANCED_WORDS = ["OPTIMAL", "DIALED IN", "IN THE ZONE", "PERFECT", "GOLDILOCKS", "JUST RIGHT", "SWEET SPOT", "GREAT!"];
-
-        // Available Days of Week
         const DAYS_OF_WEEK = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
 
-        // Initial default hidden/purged exercises (seeded into localStorage on first load)
         const INITIAL_PURGED = [
             "Tricep Extensions", "Side Crunches", "Hanging Leg Raises", 
             "Floor Leg Raises", "Crunches (side)", "Leg Raises (floor)", "Leg Raises (hanging)",
             "Nordic Hamstring Curls"
         ];
 
-        // Available Group Options
         const MUSCLE_GROUPS = [
             "Arms", "Back", "Chest", "Core", "Legs", 
             "Pull", "Push", "Shoulders"
@@ -707,7 +696,6 @@
             "Traps", "Triceps"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-        // Pre-populated default locked exercises definitions
         const PRESET_EXERCISES = {
             "Push-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Pull-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Lats"], isLocked: true },
@@ -771,21 +759,17 @@
             localStorage.setItem('deletedPresets', JSON.stringify(deletedPresets));
         }
 
-        // History Actions / Editing State
         let activeHistoryId = null;
         let editSelectedEquipment = "Bodyweight";
 
-        // Log Form Difficulty State
         let selectedDifficultyType = null;  
         let selectedDifficultyStage = 0;    
         let selectedDifficulty = null;     
 
-        // Edit Modal Difficulty State
         let editSelectedDiffType = null;
         let editSelectedDiffStage = 0;
         let editSelectedDifficulty = null;
 
-        // Favorites / List Filter States
         let activeViewFilter = 'favorites'; 
         let activeGroupMode = localStorage.getItem('activeGroupMode') || null; 
         if (activeGroupMode === 'null' || activeGroupMode === 'undefined') activeGroupMode = null;
@@ -800,7 +784,6 @@
             return [];
         }
 
-        // Initialize preset metadata
         function initPresetMetadata() {
             Object.keys(PRESET_EXERCISES).forEach(exName => {
                 if (deletedPresets.some(d => d.toLowerCase() === exName.toLowerCase())) {
@@ -870,7 +853,6 @@
             updateWeightFieldState();
         }
 
-        /* Log Form Difficulty Button Logic */
         function setDifficulty(type, btnElement) {
             if (btnElement) btnElement.blur();
             if (selectedDifficultyType !== type) {
@@ -963,7 +945,6 @@
             }
         }
 
-        /* Edit Modal Difficulty Button Logic */
         function setEditDifficulty(type, btnElement) {
             if (btnElement) btnElement.blur();
             if (editSelectedDiffType !== type) {
@@ -1260,7 +1241,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        /* --- Filter Controls Logic --- */
         function setViewFilter(mode) {
             activeViewFilter = mode;
             updateFilterButtons();
@@ -1482,7 +1462,6 @@
             }
         }
 
-        /* Long-Press for Exercise Favorite Buttons */
         function attachLongPress(btn, exName) {
             let timer = null;
             let isLongPress = false;
@@ -1572,7 +1551,6 @@
             });
         }
 
-        /* Day Schedule Modal Logic */
         function openDayModal(exName) {
             activeDayModalExercise = exName;
             document.getElementById('day-modal-title').textContent = `Assign Days: ${exName}`;
@@ -1634,7 +1612,6 @@
             }
         }
 
-        /* --- History Section Long Press & Editing --- */
         function updateTable() {
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
