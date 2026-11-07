@@ -1048,6 +1048,7 @@
         function getMeta(exName) {
             if (!exName) return { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], days: [], isLocked: false };
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === exName.toLowerCase());
+            const isPreset = Object.keys(PRESET_EXERCISES).some(p => p.toLowerCase() === exName.toLowerCase());
             if (key) {
                 const m = exerciseMeta[key];
                 return {
@@ -1056,10 +1057,10 @@
                     muscleGroups: normalizeArray(m.muscleGroups),
                     musclesGeneral: normalizeArray(m.musclesGeneral || m.muscles),
                     days: normalizeArray(m.days),
-                    isLocked: !!m.isLocked || !!PRESET_EXERCISES[key]
+                    isLocked: isPreset
                 };
             }
-            return { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], days: [], isLocked: false };
+            return { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], days: [], isLocked: isPreset };
         }
 
         function ensureMeta(exName) {
@@ -1073,14 +1074,16 @@
             }
 
             const key = Object.keys(exerciseMeta).find(k => k.toLowerCase() === lowerEx);
+            const isPreset = Object.keys(PRESET_EXERCISES).some(p => p.toLowerCase() === lowerEx);
             if (key) {
                 exerciseMeta[key].muscleGroups = normalizeArray(exerciseMeta[key].muscleGroups);
                 exerciseMeta[key].musclesGeneral = normalizeArray(exerciseMeta[key].musclesGeneral || exerciseMeta[key].muscles);
                 exerciseMeta[key].days = normalizeArray(exerciseMeta[key].days);
+                exerciseMeta[key].isLocked = isPreset;
                 if (!exerciseMeta[key].defaultEquipment) exerciseMeta[key].defaultEquipment = "Bodyweight";
                 return exerciseMeta[key];
             }
-            exerciseMeta[exName] = { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], days: [], isLocked: false };
+            exerciseMeta[exName] = { favorite: false, defaultEquipment: "Bodyweight", muscleGroups: [], musclesGeneral: [], days: [], isLocked: isPreset };
             saveMeta();
             return exerciseMeta[exName];
         }
@@ -1963,7 +1966,8 @@
 
             allExercises.forEach(ex => {
                 const meta = ensureMeta(ex);
-                const isLocked = meta.isLocked || !!PRESET_EXERCISES[ex];
+                // Dynamically determine lock status based strictly on PRESET_EXERCISES
+                const isLocked = !!Object.keys(PRESET_EXERCISES).find(p => p.toLowerCase() === ex.toLowerCase());
 
                 const item = document.createElement('div');
                 item.className = 'setting-item';
