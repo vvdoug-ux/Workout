@@ -165,7 +165,7 @@
         .equip-select-group {
             display: flex;
             gap: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
         .equip-btn {
             flex: 1;
@@ -187,6 +187,44 @@
             color: white;
             border-color: #2563eb;
         }
+
+        /* x2 Multiplier Checkbox Button Style matching input heights precisely */
+        .x2-container {
+            display: none;
+            flex-direction: column;
+            justify-content: flex-start;
+            flex: none;
+            width: 42px;
+        }
+        .x2-container.visible {
+            display: flex;
+        }
+        .x2-toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            background: transparent;
+            color: #64748b;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+            margin-top: 0;
+        }
+        .x2-toggle-btn.selected {
+            background: #22c55e;
+            color: white;
+            border-color: #22c55e;
+        }
+        .x2-toggle-btn:hover { background: #f8fafc; }
+        .x2-toggle-btn.selected:hover { background: #16a34a; }
 
         /* Favorite Star Button */
         .star-btn {
@@ -450,14 +488,21 @@
                     <datalist id="exercise-history"></datalist>
                 </div>
 
-                <!-- Unlabeled Equipment Tag Buttons -->
+                <!-- Equipment Tag Buttons Row 1 -->
                 <div class="equip-select-group">
                     <button type="button" class="equip-btn" data-equip="Bodyweight" onclick="setFormEquipment('Bodyweight')">Bodyweight</button>
                     <button type="button" class="equip-btn" data-equip="Barbell" onclick="setFormEquipment('Barbell')">Barbell</button>
                     <button type="button" class="equip-btn" data-equip="Dumbbells" onclick="setFormEquipment('Dumbbells')">Dumbbells</button>
                 </div>
 
-                <div class="form-group" style="display: flex; gap: 10px;">
+                <!-- Equipment Tag Buttons Row 2 -->
+                <div class="equip-select-group" style="margin-bottom: 15px;">
+                    <button type="button" class="equip-btn" data-equip="Kettlebell" onclick="setFormEquipment('Kettlebell')">Kettlebell</button>
+                    <button type="button" class="equip-btn" data-equip="Plate" onclick="setFormEquipment('Plate')">Plate</button>
+                    <button type="button" class="equip-btn" data-equip="Ball" onclick="setFormEquipment('Ball')">Ball</button>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 10px; align-items: flex-start;">
                     <div style="flex: 1;">
                         <label>Weight</label>
                         <input type="number" id="weight" step="0.5" onfocus="this.select()" required>
@@ -469,6 +514,11 @@
                     <div style="flex: 1;">
                         <label>Reps</label>
                         <input type="number" id="reps" onfocus="this.select()" required>
+                    </div>
+                    <!-- x2 Multiplier Compact Checkbox Button with Label -->
+                    <div id="x2-wrapper" class="x2-container">
+                        <label>x2</label>
+                        <button type="button" id="x2-btn" class="x2-toggle-btn selected" onclick="toggleX2Multiplier()">✓</button>
                     </div>
                 </div>
 
@@ -491,16 +541,15 @@
             <div class="filter-row" style="gap: 4px;">
                 <button type="button" class="filter-btn sub-btn active" id="btn-view-favorites" onclick="setViewFilter('favorites')">Favorites</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-view-all" onclick="setViewFilter('all')">All</button>
-                <button type="button" class="filter-btn sub-btn" id="btn-group-groups" onclick="toggleGroupMode('groups')">Groups</button>
-                <button type="button" class="filter-btn sub-btn" id="btn-group-muscles" onclick="toggleGroupMode('muscles')">Muscles</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-group-general" onclick="toggleGroupMode('general')">General</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-group-specific" onclick="toggleGroupMode('specific')">Specific</button>
             </div>
-            <!-- Row 2: Split / Focus Filter Buttons -->
+            <!-- Row 2: Split / Focus Filter Buttons (Push, Pull, Legs, Core) -->
             <div class="filter-row" style="gap: 4px;">
-                <button type="button" class="filter-btn sub-btn" id="btn-cat-leg" onclick="setCategoryFilter('Leg Day')">Leg Day</button>
-                <button type="button" class="filter-btn sub-btn" id="btn-cat-arm" onclick="setCategoryFilter('Arm Day')">Arm Day</button>
-                <button type="button" class="filter-btn sub-btn" id="btn-cat-core" onclick="setCategoryFilter('Core')">Core</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-cat-push" onclick="setCategoryFilter('Push')">Push</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-cat-pull" onclick="setCategoryFilter('Pull')">Pull</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-leg" onclick="setCategoryFilter('Legs')">Legs</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-core" onclick="setCategoryFilter('Core')">Core</button>
             </div>
             <!-- Row 3: Day of Week Filter Buttons -->
             <div class="filter-row" style="gap: 4px; margin-bottom: 22px;">
@@ -610,8 +659,13 @@
                     <button type="button" class="equip-btn edit-equip-btn" data-equip="Barbell" onclick="setEditEquipment('Barbell')">Barbell</button>
                     <button type="button" class="equip-btn edit-equip-btn" data-equip="Dumbbells" onclick="setEditEquipment('Dumbbells')">Dumbbells</button>
                 </div>
+                <div class="equip-select-group" style="margin-bottom: 15px;">
+                    <button type="button" class="equip-btn edit-equip-btn" data-equip="Kettlebell" onclick="setEditEquipment('Kettlebell')">Kettlebell</button>
+                    <button type="button" class="equip-btn edit-equip-btn" data-equip="Plate" onclick="setEditEquipment('Plate')">Plate</button>
+                    <button type="button" class="equip-btn edit-equip-btn" data-equip="Ball" onclick="setEditEquipment('Ball')">Ball</button>
+                </div>
 
-                <div class="form-group" style="display: flex; gap: 10px;">
+                <div class="form-group" style="display: flex; gap: 10px; align-items: flex-start;">
                     <div style="flex: 1;">
                         <label>Weight</label>
                         <input type="number" id="edit-entry-weight" step="0.5">
@@ -623,6 +677,10 @@
                     <div style="flex: 1;">
                         <label>Reps</label>
                         <input type="number" id="edit-entry-reps" required>
+                    </div>
+                    <div id="edit-x2-wrapper" class="x2-container">
+                        <label>x2</label>
+                        <button type="button" id="edit-x2-btn" class="x2-toggle-btn selected" onclick="toggleEditX2Multiplier()">✓</button>
                     </div>
                 </div>
 
@@ -687,12 +745,13 @@
 
         const MUSCLE_GROUPS = [
             "Arms", "Back", "Chest", "Core", "Legs", 
-            "Pull", "Push", "Shoulders"
+            "Pull", "Push", "Shoulders", "Total Body"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
         const MUSCLES_GENERAL = [
-            "Abs", "Biceps", "Calves", "Deltoids", "Forearms", 
-            "Glutes", "Hamstrings", "Lats", "Lower Back", 
+            "Abs", "Biceps", "Calves", "Compound", 
+            "Deltoid (anterior)", "Deltoid (lateral)", "Deltoid (posterior)", "Deltoids (all)", 
+            "Forearms", "Glutes", "Hamstrings", "Lats", "Lower Back", 
             "Obliques", "Pecs", "Quads", "Rhomboids", 
             "Traps", "Triceps"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
@@ -701,57 +760,67 @@
             "Push-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Pull-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Lats"], isLocked: true },
             "Bench Press": { defaultEquipment: "Barbell", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
-            "Overhead Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Overhead Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Push"], musclesGeneral: ["Deltoid (anterior)"], isLocked: true },
             "Bicep Curls": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Pull"], musclesGeneral: ["Biceps"], isLocked: true },
             "Skull Crushers": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
-            "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Push", "Legs"], musclesGeneral: ["Quads"], isLocked: true },
-            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
-            "Front Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
-            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: ["Deltoids"], isLocked: true },
-            "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
+            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Push"], musclesGeneral: ["Deltoid (lateral)"], isLocked: true },
+            "Front Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push", "Shoulders"], musclesGeneral: ["Deltoid (anterior)"], isLocked: true },
+            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: ["Deltoids (all)"], isLocked: true },
+            "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoid (posterior)"], isLocked: true },
             "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids"], isLocked: true },
+            "Bent-over Row": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Lats"], isLocked: true },
             "Shrugs": { defaultEquipment: "Barbell", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Traps"], isLocked: true },
             "Farmer Carries": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms"], musclesGeneral: ["Forearms"], isLocked: true },
             "Upright Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Traps"], isLocked: true },
             "Pullover": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Lats"], isLocked: true },
             "Crunches": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
             "Crunches (bicycle)": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
+            "Crunches (side)": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
+            "Leg Raises (floor)": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Leg Raises (hanging)": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
             "Plank": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
             "Superman": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Lower Back"], isLocked: true },
             "Glute Bridge": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Glutes"], isLocked: true },
             "Hip Thrusts": { defaultEquipment: "Barbell", muscleGroups: ["Legs"], musclesGeneral: ["Glutes"], isLocked: true },
-            "Lunges": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true },
-            "Calf Raises": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Calves"], isLocked: true },
+            "Lunges": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
+            "Calf Raises": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Calves"], isLocked: true },
             "Floor Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Bird Dogs": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Lower Back"], isLocked: true },
             "Dead Bugs": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
-            "Russian Twists": { defaultEquipment: "Dumbbells", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
-            "Arnold Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Push"], musclesGeneral: ["Deltoids"], isLocked: true },
+            "Russian Twists": { defaultEquipment: "Plate", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
+            "Arnold Press": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Push"], musclesGeneral: ["Deltoids (all)"], isLocked: true },
             "Tricep Kickbacks": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
             "Wrist Curls": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Pull"], musclesGeneral: ["Forearms"], isLocked: true },
             "Wrist Extensions": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Pull"], musclesGeneral: ["Forearms"], isLocked: true },
             "Inverted Row": { defaultEquipment: "Bodyweight", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Lats"], isLocked: true },
             "Chest Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Flutter Kicks": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
-            "Deadlifts": { defaultEquipment: "Barbell", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Glutes"], isLocked: true },
-            "Deadlifts (sumo)": { defaultEquipment: "Barbell", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Quads"], isLocked: true },
-            "Deadlifts (romanian)": { defaultEquipment: "Barbell", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true },
-            "Hamstring Curls (nordic)": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Pull"], musclesGeneral: ["Hamstrings"], isLocked: true },
+            "Deadlifts": { defaultEquipment: "Barbell", muscleGroups: ["Legs"], musclesGeneral: ["Glutes"], isLocked: true },
+            "Deadlifts (sumo)": { defaultEquipment: "Barbell", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
+            "Deadlifts (romanian)": { defaultEquipment: "Barbell", muscleGroups: ["Legs"], musclesGeneral: ["Hamstrings"], isLocked: true },
+            "Hamstring Curls (nordic)": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Hamstrings"], isLocked: true },
             "Dips (wide)": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Dips (narrow)": { defaultEquipment: "Bodyweight", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
             "Plank (reverse)": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
             "Plank (side)": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Obliques"], isLocked: true },
-            "Donkey Kicks": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Glutes"], isLocked: true },
-            "Squats (bulgarian split)": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true },
+            "Donkey Kicks": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Glutes"], isLocked: true },
+            "Squats (bulgarian split)": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
             "Wall Sit": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
-            "Tuck Jumps": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs", "Push"], musclesGeneral: ["Quads"], isLocked: true }
+            "Tuck Jumps": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
+            "Burpees": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Dumbbell Thrusters": { defaultEquipment: "Dumbbells", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Mountain Climbers": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Plank Jacks": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Jumping Jacks": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Push-ups (inchworm)": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Sprawl": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true }
         };
 
         // Load existing data from browser storage and sanitize stale lock flags
         let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
         let exerciseMeta = JSON.parse(localStorage.getItem('exerciseMeta')) || {};
         
-        // Automatically sanitize exerciseMeta on startup so non-preset exercises are never incorrectly locked
         Object.keys(exerciseMeta).forEach(k => {
             const isPreset = Object.keys(PRESET_EXERCISES).some(p => p.toLowerCase() === k.toLowerCase());
             exerciseMeta[k].isLocked = isPreset;
@@ -772,6 +841,8 @@
 
         let activeHistoryId = null;
         let editSelectedEquipment = "Bodyweight";
+        let formX2Active = true;
+        let editX2Active = true;
 
         let selectedDifficultyType = null;  
         let selectedDifficultyStage = 0;    
@@ -784,6 +855,8 @@
         let activeViewFilter = 'favorites'; 
         let activeGroupMode = localStorage.getItem('activeGroupMode') || null; 
         if (activeGroupMode === 'null' || activeGroupMode === 'undefined') activeGroupMode = null;
+        if (activeGroupMode === 'groups') activeGroupMode = 'general';
+        if (activeGroupMode === 'muscles') activeGroupMode = 'specific';
 
         let activeCategoryFilter = null;   
         let activeDayFilter = null;        
@@ -847,6 +920,10 @@
         const exerciseInput = document.getElementById('exercise');
         const weightInput = document.getElementById('weight');
         const starBtn = document.getElementById('star-btn');
+        const x2Btn = document.getElementById('x2-btn');
+        const editX2Btn = document.getElementById('edit-x2-btn');
+        const x2Wrapper = document.getElementById('x2-wrapper');
+        const editX2Wrapper = document.getElementById('edit-x2-wrapper');
 
         document.getElementById('date').value = getPacificDateString();
 
@@ -862,6 +939,28 @@
             });
 
             updateWeightFieldState();
+        }
+
+        function toggleX2Multiplier() {
+            formX2Active = !formX2Active;
+            if (formX2Active) {
+                x2Btn.classList.add('selected');
+                x2Btn.textContent = '✓';
+            } else {
+                x2Btn.classList.remove('selected');
+                x2Btn.textContent = '';
+            }
+        }
+
+        function toggleEditX2Multiplier() {
+            editX2Active = !editX2Active;
+            if (editX2Active) {
+                editX2Btn.classList.add('selected');
+                editX2Btn.textContent = '✓';
+            } else {
+                editX2Btn.classList.remove('selected');
+                editX2Btn.textContent = '';
+            }
         }
 
         function setDifficulty(type, btnElement) {
@@ -1052,6 +1151,9 @@
             form.reset();
             document.getElementById('date').value = getPacificDateString();
             setFormEquipment("Bodyweight");
+            formX2Active = true;
+            x2Btn.classList.add('selected');
+            x2Btn.textContent = '✓';
             setDifficultyFromValue(null);
             updateStarButton();
         }
@@ -1146,6 +1248,17 @@
                     document.getElementById('sets').value = newest.sets ? newest.sets : '';
                     document.getElementById('reps').value = newest.reps;
                     setFormEquipment(newest.equipment || getMeta(exName).defaultEquipment);
+                    
+                    if (newest.equipment === 'Dumbbells') {
+                        formX2Active = newest.isX2 !== undefined ? newest.isX2 : true;
+                        if (formX2Active) {
+                            x2Btn.classList.add('selected');
+                            x2Btn.textContent = '✓';
+                        } else {
+                            x2Btn.classList.remove('selected');
+                            x2Btn.textContent = '';
+                        }
+                    }
 
                     const newestWithDiff = sorted.find(w => w.difficulty);
                     setDifficultyFromValue(newestWithDiff ? newestWithDiff.difficulty : null);
@@ -1172,6 +1285,51 @@
                 weightInput.style.backgroundColor = '';
                 weightInput.style.color = '';
                 weightInput.style.cursor = '';
+            }
+
+            if (selectedFormEquipment === "Dumbbells") {
+                x2Wrapper.classList.add('visible');
+                if (formX2Active) {
+                    x2Btn.classList.add('selected');
+                    x2Btn.textContent = '✓';
+                } else {
+                    x2Btn.classList.remove('selected');
+                    x2Btn.textContent = '';
+                }
+            } else {
+                x2Wrapper.classList.remove('visible');
+            }
+        }
+
+        function updateEditWeightFieldState() {
+            if (editSelectedEquipment === "Bodyweight") {
+                const wInput = document.getElementById('edit-entry-weight');
+                wInput.disabled = true;
+                wInput.value = '0';
+                wInput.required = false;
+                wInput.style.backgroundColor = '#e2e8f0';
+                wInput.style.color = '#94a3b8';
+                wInput.style.cursor = 'not-allowed';
+            } else {
+                const wInput = document.getElementById('edit-entry-weight');
+                wInput.disabled = false;
+                wInput.required = true;
+                wInput.style.backgroundColor = '';
+                wInput.style.color = '';
+                wInput.style.cursor = '';
+            }
+
+            if (editSelectedEquipment === "Dumbbells") {
+                editX2Wrapper.classList.add('visible');
+                if (editX2Active) {
+                    editX2Btn.classList.add('selected');
+                    editX2Btn.textContent = '✓';
+                } else {
+                    editX2Btn.classList.remove('selected');
+                    editX2Btn.textContent = '';
+                }
+            } else {
+                editX2Wrapper.classList.remove('visible');
             }
         }
 
@@ -1224,6 +1382,7 @@
             const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
+            const isX2 = (selectedFormEquipment === 'Dumbbells' && formX2Active);
 
             ensureMeta(exercise);
 
@@ -1235,6 +1394,7 @@
                 weight, 
                 sets, 
                 reps,
+                isX2,
                 difficulty: selectedDifficulty
             };
 
@@ -1303,8 +1463,8 @@
         function updateFilterButtons() {
             const btnFav = document.getElementById('btn-view-favorites');
             const btnAll = document.getElementById('btn-view-all');
-            const btnGrp = document.getElementById('btn-group-groups');
-            const btnMus = document.getElementById('btn-group-muscles');
+            const btnGen = document.getElementById('btn-group-general');
+            const btnSpec = document.getElementById('btn-group-specific');
 
             if (btnFav && btnAll) {
                 if (activeViewFilter === 'favorites') {
@@ -1316,25 +1476,24 @@
                 }
             }
 
-            if (btnGrp && btnMus) {
-                if (activeGroupMode === 'groups') {
-                    btnGrp.classList.add('active');
-                    btnMus.classList.remove('active');
-                } else if (activeGroupMode === 'muscles') {
-                    btnGrp.classList.remove('active');
-                    btnMus.classList.add('active');
+            if (btnGen && btnSpec) {
+                if (activeGroupMode === 'general') {
+                    btnGen.classList.add('active');
+                    btnSpec.classList.remove('active');
+                } else if (activeGroupMode === 'specific') {
+                    btnGen.classList.remove('active');
+                    btnSpec.classList.add('active');
                 } else {
-                    btnGrp.classList.remove('active');
-                    btnMus.classList.remove('active');
+                    btnGen.classList.remove('active');
+                    btnSpec.classList.remove('active');
                 }
             }
 
             const catMap = {
-                'Leg Day': 'btn-cat-leg',
-                'Arm Day': 'btn-cat-arm',
-                'Core': 'btn-cat-core',
                 'Push': 'btn-cat-push',
-                'Pull': 'btn-cat-pull'
+                'Pull': 'btn-cat-pull',
+                'Legs': 'btn-cat-leg',
+                'Core': 'btn-cat-core'
             };
 
             Object.keys(catMap).forEach(catKey => {
@@ -1377,16 +1536,14 @@
                 exercises = exercises.filter(ex => {
                     const meta = getMeta(ex);
                     const groups = meta.muscleGroups || [];
-                    if (activeCategoryFilter === 'Leg Day') {
-                        return groups.includes('Legs');
-                    } else if (activeCategoryFilter === 'Arm Day') {
-                        return groups.some(mg => ['Arms', 'Chest', 'Back', 'Shoulders'].includes(mg));
-                    } else if (activeCategoryFilter === 'Core') {
-                        return groups.includes('Core');
-                    } else if (activeCategoryFilter === 'Push') {
+                    if (activeCategoryFilter === 'Push') {
                         return groups.includes('Push');
                     } else if (activeCategoryFilter === 'Pull') {
                         return groups.includes('Pull');
+                    } else if (activeCategoryFilter === 'Legs') {
+                        return groups.includes('Legs');
+                    } else if (activeCategoryFilter === 'Core') {
+                        return groups.includes('Core');
                     }
                     return true;
                 });
@@ -1405,7 +1562,7 @@
 
             const todayStr = getPacificDateString();
 
-            if (activeGroupMode === 'muscles') {
+            if (activeGroupMode === 'specific') {
                 const categorized = {};
                 MUSCLES_GENERAL.forEach(m => categorized[m] = []);
                 categorized["Uncategorized"] = [];
@@ -1424,7 +1581,7 @@
                 });
 
                 renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
-            } else if (activeGroupMode === 'groups') {
+            } else if (activeGroupMode === 'general') {
                 const categorized = {};
                 const groupsToDisplay = MUSCLE_GROUPS.filter(mg => mg !== 'Push' && mg !== 'Pull');
                 
@@ -1744,6 +1901,15 @@
             document.getElementById('edit-entry-reps').value = entry.reps !== undefined ? entry.reps : '';
 
             setEditEquipment(entry.equipment || 'Bodyweight');
+            editX2Active = entry.isX2 !== undefined ? entry.isX2 : (entry.equipment === 'Dumbbells');
+            if (editX2Active) {
+                editX2Btn.classList.add('selected');
+                editX2Btn.textContent = '✓';
+            } else {
+                editX2Btn.classList.remove('selected');
+                editX2Btn.textContent = '';
+            }
+
             setEditDifficultyFromValue(entry.difficulty || null);
 
             document.getElementById('edit-entry-modal').classList.add('active');
@@ -1764,21 +1930,7 @@
                 }
             });
 
-            const wInput = document.getElementById('edit-entry-weight');
-            if (editSelectedEquipment === 'Bodyweight') {
-                wInput.disabled = true;
-                wInput.value = '0';
-                wInput.required = false;
-                wInput.style.backgroundColor = '#e2e8f0';
-                wInput.style.color = '#94a3b8';
-                wInput.style.cursor = 'not-allowed';
-            } else {
-                wInput.disabled = false;
-                wInput.required = true;
-                wInput.style.backgroundColor = '';
-                wInput.style.color = '';
-                wInput.style.cursor = '';
-            }
+            updateEditWeightFieldState();
         }
 
         function saveEditedEntry(e) {
@@ -1791,6 +1943,7 @@
             const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
             const sets = parseInt(document.getElementById('edit-entry-sets').value);
             const reps = parseInt(document.getElementById('edit-entry-reps').value);
+            const isX2 = (editSelectedEquipment === 'Dumbbells' && editX2Active);
 
             ensureMeta(exercise);
 
@@ -1804,6 +1957,7 @@
                         weight,
                         sets,
                         reps,
+                        isX2,
                         difficulty: editSelectedDifficulty
                     };
                 }
@@ -1874,7 +2028,11 @@
             data.forEach(w => {
                 const isBodyweight = (w.equipment ? w.equipment === "Bodyweight" : meta.defaultEquipment === "Bodyweight");
                 const numSets = w.sets ? w.sets : 1;
-                const volume = isBodyweight ? (numSets * w.reps) : (w.weight * numSets * w.reps);
+                let multiplier = 1;
+                if (w.equipment === 'Dumbbells') {
+                    multiplier = (w.isX2 !== undefined ? w.isX2 : true) ? 2 : 1;
+                }
+                const volume = isBodyweight ? (numSets * w.reps) : (w.weight * multiplier * numSets * w.reps);
                 
                 if (!dateMap[w.date]) {
                     dateMap[w.date] = { volume: 0, difficulties: [] };
@@ -1888,7 +2046,6 @@
             const dates = Object.keys(dateMap).sort((a, b) => new Date(a) - new Date(b));
             const totalVolumes = dates.map(d => dateMap[d].volume);
             
-            // Map each bar's color to the recorded difficulty for that day
             const barColors = dates.map(d => {
                 const diffs = dateMap[d].difficulties;
                 if (diffs.length === 0) return 'rgba(37, 99, 235, 0.75)'; // Default blue
@@ -1994,7 +2151,6 @@
 
             allExercises.forEach(ex => {
                 const meta = ensureMeta(ex);
-                // Dynamically determine lock status based strictly on PRESET_EXERCISES
                 const isLocked = !!Object.keys(PRESET_EXERCISES).find(p => p.toLowerCase() === ex.toLowerCase());
 
                 const item = document.createElement('div');
@@ -2056,7 +2212,7 @@
 
                 // Groups Selection Chips
                 const mgLabel = document.createElement('label');
-                mgLabel.textContent = 'Groups:';
+                mgLabel.textContent = 'General:';
                 mgLabel.style.marginTop = '6px';
 
                 const mgChipsDiv = document.createElement('div');
@@ -2078,7 +2234,7 @@
 
                 // Muscles Selection Chips
                 const mgGenLabel = document.createElement('label');
-                mgGenLabel.textContent = 'Muscles:';
+                mgGenLabel.textContent = 'Specific:';
                 mgGenLabel.style.marginTop = '10px';
 
                 const mgGenChipsDiv = document.createElement('div');
