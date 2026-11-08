@@ -188,13 +188,13 @@
             border-color: #2563eb;
         }
 
-        /* x2 Multiplier Checkbox Button Style matching input heights precisely */
+        /* Volume Multiplier Checkbox Button Style (scaled down 5% to ~40px) */
         .x2-container {
             display: none;
             flex-direction: column;
             justify-content: flex-start;
             flex: none;
-            width: 42px;
+            width: 40px;
         }
         .x2-container.visible {
             display: flex;
@@ -203,14 +203,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             background: transparent;
             color: #64748b;
             border: 1px solid #ccc;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 0.95em;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
@@ -503,7 +503,7 @@
                 </div>
 
                 <div class="form-group" style="display: flex; gap: 10px; align-items: flex-start;">
-                    <div style="flex: 1;">
+                    <div id="weight-group" style="flex: 1;">
                         <label>Weight</label>
                         <input type="number" id="weight" step="0.5" onfocus="this.select()" required>
                     </div>
@@ -515,10 +515,10 @@
                         <label>Reps</label>
                         <input type="number" id="reps" onfocus="this.select()" required>
                     </div>
-                    <!-- x2 Multiplier Compact Checkbox Button with Label -->
+                    <!-- Volume Multiplier Checkbox Button with Label -->
                     <div id="x2-wrapper" class="x2-container">
-                        <label>x2</label>
-                        <button type="button" id="x2-btn" class="x2-toggle-btn selected" onclick="toggleX2Multiplier()">✓</button>
+                        <label>Volume</label>
+                        <button type="button" id="x2-btn" class="x2-toggle-btn selected" onclick="toggleX2Multiplier()">x2</button>
                     </div>
                 </div>
 
@@ -543,6 +543,11 @@
                 <button type="button" class="filter-btn sub-btn" id="btn-view-all" onclick="setViewFilter('all')">All</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-group-general" onclick="toggleGroupMode('general')">General</button>
                 <button type="button" class="filter-btn sub-btn" id="btn-group-specific" onclick="toggleGroupMode('specific')">Specific</button>
+            </div>
+            <!-- Row 1.5: Posterior / Anterior Filter Buttons -->
+            <div class="filter-row" style="gap: 4px;">
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-posterior" onclick="setCategoryFilter('Posterior')">Posterior</button>
+                <button type="button" class="filter-btn sub-btn" id="btn-cat-anterior" onclick="setCategoryFilter('Anterior')">Anterior</button>
             </div>
             <!-- Row 2: Split / Focus Filter Buttons (Push, Pull, Legs, Core) -->
             <div class="filter-row" style="gap: 4px;">
@@ -666,7 +671,7 @@
                 </div>
 
                 <div class="form-group" style="display: flex; gap: 10px; align-items: flex-start;">
-                    <div style="flex: 1;">
+                    <div id="edit-weight-group" style="flex: 1;">
                         <label>Weight</label>
                         <input type="number" id="edit-entry-weight" step="0.5">
                     </div>
@@ -679,8 +684,8 @@
                         <input type="number" id="edit-entry-reps" required>
                     </div>
                     <div id="edit-x2-wrapper" class="x2-container">
-                        <label>x2</label>
-                        <button type="button" id="edit-x2-btn" class="x2-toggle-btn selected" onclick="toggleEditX2Multiplier()">✓</button>
+                        <label>Volume</label>
+                        <button type="button" id="edit-x2-btn" class="x2-toggle-btn selected" onclick="toggleEditX2Multiplier()">x2</button>
                     </div>
                 </div>
 
@@ -756,6 +761,9 @@
             "Traps", "Triceps"
         ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
+        const POSTERIOR_SPECIFICS = ["Traps", "Lats", "Rhomboids", "Deltoid (posterior)", "Lower Back", "Glutes", "Hamstrings", "Calves", "Biceps", "Forearms"];
+        const ANTERIOR_SPECIFICS = ["Pecs", "Deltoid (anterior)", "Deltoid (lateral)", "Triceps", "Quads", "Abs", "Obliques"];
+
         const PRESET_EXERCISES = {
             "Push-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Chest", "Push"], musclesGeneral: ["Pecs"], isLocked: true },
             "Pull-ups": { defaultEquipment: "Bodyweight", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Lats"], isLocked: true },
@@ -764,9 +772,9 @@
             "Bicep Curls": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Pull"], musclesGeneral: ["Biceps"], isLocked: true },
             "Skull Crushers": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push"], musclesGeneral: ["Triceps"], isLocked: true },
             "Squats": { defaultEquipment: "Bodyweight", muscleGroups: ["Legs"], musclesGeneral: ["Quads"], isLocked: true },
-            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Arms", "Push"], musclesGeneral: ["Deltoid (lateral)"], isLocked: true },
-            "Front Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Arms", "Push", "Shoulders"], musclesGeneral: ["Deltoid (anterior)"], isLocked: true },
-            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders", "Arms"], musclesGeneral: ["Deltoids (all)"], isLocked: true },
+            "Lateral Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Shoulders", "Push"], musclesGeneral: ["Deltoid (lateral)"], isLocked: true },
+            "Front Raises": { defaultEquipment: "Dumbbells", muscleGroups: ["Push", "Shoulders"], musclesGeneral: ["Deltoid (anterior)"], isLocked: true },
+            "Arm Circles": { defaultEquipment: "Bodyweight", muscleGroups: ["Shoulders"], musclesGeneral: ["Deltoids (all)"], isLocked: true },
             "Reverse Fly": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Shoulders"], musclesGeneral: ["Deltoid (posterior)"], isLocked: true },
             "Batwing Rows": { defaultEquipment: "Dumbbells", muscleGroups: ["Pull", "Back"], musclesGeneral: ["Rhomboids"], isLocked: true },
             "Bent-over Row": { defaultEquipment: "Dumbbells", muscleGroups: ["Back", "Pull"], musclesGeneral: ["Lats"], isLocked: true },
@@ -814,7 +822,9 @@
             "Plank Jacks": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
             "Jumping Jacks": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
             "Push-ups (inchworm)": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
-            "Sprawl": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true }
+            "Sprawl": { defaultEquipment: "Bodyweight", muscleGroups: ["Total Body"], musclesGeneral: ["Compound"], isLocked: true },
+            "Hollow Body Hold": { defaultEquipment: "Bodyweight", muscleGroups: ["Core"], musclesGeneral: ["Abs"], isLocked: true },
+            "Kettlebell Swings": { defaultEquipment: "Kettlebell", muscleGroups: ["Total Body"], musclesGeneral: ["Compound", "Glutes"], isLocked: true }
         };
 
         // Load existing data from browser storage and sanitize stale lock flags
@@ -919,6 +929,7 @@
         const datalist = document.getElementById('exercise-history');
         const exerciseInput = document.getElementById('exercise');
         const weightInput = document.getElementById('weight');
+        const weightGroup = document.getElementById('weight-group');
         const starBtn = document.getElementById('star-btn');
         const x2Btn = document.getElementById('x2-btn');
         const editX2Btn = document.getElementById('edit-x2-btn');
@@ -945,10 +956,10 @@
             formX2Active = !formX2Active;
             if (formX2Active) {
                 x2Btn.classList.add('selected');
-                x2Btn.textContent = '✓';
+                x2Btn.textContent = 'x2';
             } else {
                 x2Btn.classList.remove('selected');
-                x2Btn.textContent = '';
+                x2Btn.textContent = 'x1';
             }
         }
 
@@ -956,10 +967,10 @@
             editX2Active = !editX2Active;
             if (editX2Active) {
                 editX2Btn.classList.add('selected');
-                editX2Btn.textContent = '✓';
+                editX2Btn.textContent = 'x2';
             } else {
                 editX2Btn.classList.remove('selected');
-                editX2Btn.textContent = '';
+                editX2Btn.textContent = 'x1';
             }
         }
 
@@ -1153,7 +1164,7 @@
             setFormEquipment("Bodyweight");
             formX2Active = true;
             x2Btn.classList.add('selected');
-            x2Btn.textContent = '✓';
+            x2Btn.textContent = 'x2';
             setDifficultyFromValue(null);
             updateStarButton();
         }
@@ -1249,14 +1260,14 @@
                     document.getElementById('reps').value = newest.reps;
                     setFormEquipment(newest.equipment || getMeta(exName).defaultEquipment);
                     
-                    if (newest.equipment === 'Dumbbells') {
+                    if (newest.equipment !== 'Bodyweight') {
                         formX2Active = newest.isX2 !== undefined ? newest.isX2 : true;
                         if (formX2Active) {
                             x2Btn.classList.add('selected');
-                            x2Btn.textContent = '✓';
+                            x2Btn.textContent = 'x2';
                         } else {
                             x2Btn.classList.remove('selected');
-                            x2Btn.textContent = '';
+                            x2Btn.textContent = 'x1';
                         }
                     }
 
@@ -1273,13 +1284,12 @@
 
         function updateWeightFieldState() {
             if (selectedFormEquipment === "Bodyweight") {
+                weightGroup.style.display = 'none';
                 weightInput.disabled = true;
                 weightInput.value = '0';
                 weightInput.required = false;
-                weightInput.style.backgroundColor = '#e2e8f0';
-                weightInput.style.color = '#94a3b8';
-                weightInput.style.cursor = 'not-allowed';
             } else {
+                weightGroup.style.display = 'block';
                 weightInput.disabled = false;
                 weightInput.required = true;
                 weightInput.style.backgroundColor = '';
@@ -1287,14 +1297,14 @@
                 weightInput.style.cursor = '';
             }
 
-            if (selectedFormEquipment === "Dumbbells") {
+            if (selectedFormEquipment !== "Bodyweight") {
                 x2Wrapper.classList.add('visible');
                 if (formX2Active) {
                     x2Btn.classList.add('selected');
-                    x2Btn.textContent = '✓';
+                    x2Btn.textContent = 'x2';
                 } else {
                     x2Btn.classList.remove('selected');
-                    x2Btn.textContent = '';
+                    x2Btn.textContent = 'x1';
                 }
             } else {
                 x2Wrapper.classList.remove('visible');
@@ -1302,16 +1312,15 @@
         }
 
         function updateEditWeightFieldState() {
+            const editWeightGroup = document.getElementById('edit-weight-group');
+            const wInput = document.getElementById('edit-entry-weight');
             if (editSelectedEquipment === "Bodyweight") {
-                const wInput = document.getElementById('edit-entry-weight');
+                editWeightGroup.style.display = 'none';
                 wInput.disabled = true;
                 wInput.value = '0';
                 wInput.required = false;
-                wInput.style.backgroundColor = '#e2e8f0';
-                wInput.style.color = '#94a3b8';
-                wInput.style.cursor = 'not-allowed';
             } else {
-                const wInput = document.getElementById('edit-entry-weight');
+                editWeightGroup.style.display = 'block';
                 wInput.disabled = false;
                 wInput.required = true;
                 wInput.style.backgroundColor = '';
@@ -1319,14 +1328,14 @@
                 wInput.style.cursor = '';
             }
 
-            if (editSelectedEquipment === "Dumbbells") {
+            if (editSelectedEquipment !== "Bodyweight") {
                 editX2Wrapper.classList.add('visible');
                 if (editX2Active) {
                     editX2Btn.classList.add('selected');
-                    editX2Btn.textContent = '✓';
+                    editX2Btn.textContent = 'x2';
                 } else {
                     editX2Btn.classList.remove('selected');
-                    editX2Btn.textContent = '';
+                    editX2Btn.textContent = 'x1';
                 }
             } else {
                 editX2Wrapper.classList.remove('visible');
@@ -1379,10 +1388,10 @@
             e.preventDefault();
             const date = document.getElementById('date').value;
             const exercise = exerciseInput.value.trim();
-            const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
+            const weight = (selectedFormEquipment === 'Bodyweight') ? 0 : (parseFloat(weightInput.value) || 0);
             const sets = parseInt(document.getElementById('sets').value);
             const reps = parseInt(document.getElementById('reps').value);
-            const isX2 = (selectedFormEquipment === 'Dumbbells' && formX2Active);
+            const isX2 = (selectedFormEquipment !== 'Bodyweight' && formX2Active);
 
             ensureMeta(exercise);
 
@@ -1493,7 +1502,9 @@
                 'Push': 'btn-cat-push',
                 'Pull': 'btn-cat-pull',
                 'Legs': 'btn-cat-leg',
-                'Core': 'btn-cat-core'
+                'Core': 'btn-cat-core',
+                'Posterior': 'btn-cat-posterior',
+                'Anterior': 'btn-cat-anterior'
             };
 
             Object.keys(catMap).forEach(catKey => {
@@ -1536,6 +1547,7 @@
                 exercises = exercises.filter(ex => {
                     const meta = getMeta(ex);
                     const groups = meta.muscleGroups || [];
+                    const specifics = meta.musclesGeneral || [];
                     if (activeCategoryFilter === 'Push') {
                         return groups.includes('Push');
                     } else if (activeCategoryFilter === 'Pull') {
@@ -1544,6 +1556,12 @@
                         return groups.includes('Legs');
                     } else if (activeCategoryFilter === 'Core') {
                         return groups.includes('Core');
+                    } else if (activeCategoryFilter === 'Posterior') {
+                        const hasPostSpecific = specifics.some(s => POSTERIOR_SPECIFICS.includes(s));
+                        const isKBSwings = ex.toLowerCase() === 'kettlebell swings';
+                        return hasPostSpecific || isKBSwings;
+                    } else if (activeCategoryFilter === 'Anterior') {
+                        return specifics.some(s => ANTERIOR_SPECIFICS.includes(s));
                     }
                     return true;
                 });
@@ -1580,7 +1598,7 @@
                     }
                 });
 
-                renderCategoryGroups(container, categorized, [...MUSCLES_GENERAL, "Uncategorized"], todayStr);
+                renderCategorizedSpecificGroups(container, categorized, MUSCLES_GENERAL, "Uncategorized", todayStr);
             } else if (activeGroupMode === 'general') {
                 const categorized = {};
                 const groupsToDisplay = MUSCLE_GROUPS.filter(mg => mg !== 'Push' && mg !== 'Pull');
@@ -1720,6 +1738,94 @@
                     container.appendChild(groupDiv);
                 }
             });
+        }
+
+        function renderCategorizedSpecificGroups(container, categorizedMap, specificKeys, uncatKey, todayStr) {
+            const generalToSpecificMap = {
+                "Arms": ["Biceps", "Triceps", "Forearms"],
+                "Back": ["Lats", "Rhomboids", "Traps", "Lower Back"],
+                "Chest": ["Pecs"],
+                "Core": ["Abs", "Obliques"],
+                "Legs": ["Quads", "Hamstrings", "Glutes", "Calves"],
+                "Shoulders": ["Deltoids (all)", "Deltoid (anterior)", "Deltoid (lateral)", "Deltoid (posterior)"],
+                "Total Body": ["Compound"]
+            };
+
+            Object.keys(generalToSpecificMap).forEach(genGroup => {
+                const specificList = generalToSpecificMap[genGroup];
+                const activeSpecifics = specificList.filter(spec => categorizedMap[spec] && categorizedMap[spec].length > 0);
+
+                if (activeSpecifics.length > 0) {
+                    const genGroupDiv = document.createElement('div');
+                    genGroupDiv.style.marginBottom = '20px';
+
+                    const genHeader = document.createElement('div');
+                    genHeader.textContent = genGroup;
+                    genHeader.style.fontSize = '0.85em';
+                    genHeader.style.fontWeight = 'bold';
+                    genHeader.style.color = '#1e293b';
+                    genHeader.style.textTransform = 'uppercase';
+                    genHeader.style.letterSpacing = '0.6px';
+                    genHeader.style.marginBottom = '8px';
+                    genHeader.style.borderBottom = '1px solid #cbd5e1';
+                    genHeader.style.paddingBottom = '3px';
+                    genGroupDiv.appendChild(genHeader);
+
+                    activeSpecifics.forEach(spec => {
+                        const exercisesInSpec = categorizedMap[spec];
+                        exercisesInSpec.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                        const uniqueEx = [...new Set(exercisesInSpec)];
+
+                        const subDiv = document.createElement('div');
+                        subDiv.style.marginBottom = '10px';
+                        subDiv.style.marginLeft = '8px';
+
+                        const specHeader = document.createElement('div');
+                        specHeader.textContent = spec;
+                        specHeader.style.fontSize = '0.75em';
+                        specHeader.style.fontWeight = 'bold';
+                        specHeader.style.color = '#64748b';
+                        specHeader.style.textTransform = 'uppercase';
+                        specHeader.style.letterSpacing = '0.4px';
+                        specHeader.style.marginBottom = '4px';
+
+                        const gridDiv = document.createElement('div');
+                        gridDiv.className = 'favorites-grid';
+
+                        uniqueEx.forEach(ex => {
+                            const btn = document.createElement('button');
+                            btn.className = 'fav-btn';
+                            btn.type = 'button';
+                            btn.textContent = ex;
+
+                            const isLoggedToday = workouts.some(w => 
+                                w.exercise.toLowerCase() === ex.toLowerCase() && w.date === todayStr
+                            );
+
+                            if (isLoggedToday) {
+                                btn.classList.add('logged');
+                                btn.title = 'Already logged today (Long-press to assign days)';
+                            } else {
+                                btn.title = 'Long-press to assign days';
+                            }
+
+                            attachLongPress(btn, ex);
+                            gridDiv.appendChild(btn);
+                        });
+
+                        subDiv.appendChild(specHeader);
+                        subDiv.appendChild(gridDiv);
+                        genGroupDiv.appendChild(subDiv);
+                    });
+
+                    container.appendChild(genGroupDiv);
+                }
+            });
+
+            // Handle Uncategorized if any exist
+            if (categorizedMap[uncatKey] && categorizedMap[uncatKey].length > 0) {
+                renderCategoryGroups(container, categorizedMap, [uncatKey], todayStr);
+            }
         }
 
         function openDayModal(exName) {
@@ -1901,13 +2007,15 @@
             document.getElementById('edit-entry-reps').value = entry.reps !== undefined ? entry.reps : '';
 
             setEditEquipment(entry.equipment || 'Bodyweight');
-            editX2Active = entry.isX2 !== undefined ? entry.isX2 : (entry.equipment === 'Dumbbells');
-            if (editX2Active) {
-                editX2Btn.classList.add('selected');
-                editX2Btn.textContent = '✓';
-            } else {
-                editX2Btn.classList.remove('selected');
-                editX2Btn.textContent = '';
+            editX2Active = entry.isX2 !== undefined ? entry.isX2 : (entry.equipment !== 'Bodyweight');
+            if (editSelectedEquipment !== 'Bodyweight') {
+                if (editX2Active) {
+                    editX2Btn.classList.add('selected');
+                    editX2Btn.textContent = 'x2';
+                } else {
+                    editX2Btn.classList.remove('selected');
+                    editX2Btn.textContent = 'x1';
+                }
             }
 
             setEditDifficultyFromValue(entry.difficulty || null);
@@ -1939,11 +2047,11 @@
 
             const date = document.getElementById('edit-entry-date').value;
             const exercise = document.getElementById('edit-entry-exercise').value;
-            const weightInput = document.getElementById('edit-entry-weight');
-            const weight = weightInput.disabled ? 0 : (parseFloat(weightInput.value) || 0);
+            const wInput = document.getElementById('edit-entry-weight');
+            const weight = (editSelectedEquipment === 'Bodyweight') ? 0 : (parseFloat(wInput.value) || 0);
             const sets = parseInt(document.getElementById('edit-entry-sets').value);
             const reps = parseInt(document.getElementById('edit-entry-reps').value);
-            const isX2 = (editSelectedEquipment === 'Dumbbells' && editX2Active);
+            const isX2 = (editSelectedEquipment !== 'Bodyweight' && editX2Active);
 
             ensureMeta(exercise);
 
@@ -2029,7 +2137,7 @@
                 const isBodyweight = (w.equipment ? w.equipment === "Bodyweight" : meta.defaultEquipment === "Bodyweight");
                 const numSets = w.sets ? w.sets : 1;
                 let multiplier = 1;
-                if (w.equipment === 'Dumbbells') {
+                if (w.equipment && w.equipment !== 'Bodyweight') {
                     multiplier = (w.isX2 !== undefined ? w.isX2 : true) ? 2 : 1;
                 }
                 const volume = isBodyweight ? (numSets * w.reps) : (w.weight * multiplier * numSets * w.reps);
